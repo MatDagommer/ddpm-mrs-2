@@ -5,7 +5,8 @@ import json
 import yaml
 import os
 
-from Data_Preparation.data_preparation import Data_Preparation
+# from Data_Preparation.data_preparation import Data_Preparation
+from Data_Preparation.data_preparation_mrs import Data_Preparation
 
 from main_model import DDPM
 from denoising_model_small import ConditionalModel
@@ -31,28 +32,29 @@ if __name__ == "__main__":
     foldername = "./check_points/noise_type_" + str(args.n_type) + "/"
     print('folder:', foldername)
     os.makedirs(foldername, exist_ok=True)
+    data_path = "/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/"
     
+    train_set, val_set, test_set = Data_Preparation(data_path)
+    # [X_train, y_train, X_test, y_test] = Data_Preparation(args.n_type)
     
-    [X_train, y_train, X_test, y_test] = Data_Preparation(args.n_type)
+    # X_train = torch.FloatTensor(X_train)
+    # X_train = X_train.permute(0,2,1)
     
-    X_train = torch.FloatTensor(X_train)
-    X_train = X_train.permute(0,2,1)
+    # y_train = torch.FloatTensor(y_train)
+    # y_train = y_train.permute(0,2,1)
     
-    y_train = torch.FloatTensor(y_train)
-    y_train = y_train.permute(0,2,1)
+    # X_test = torch.FloatTensor(X_test)
+    # X_test = X_test.permute(0,2,1)
     
-    X_test = torch.FloatTensor(X_test)
-    X_test = X_test.permute(0,2,1)
+    # y_test = torch.FloatTensor(y_test)
+    # y_test = y_test.permute(0,2,1)
     
-    y_test = torch.FloatTensor(y_test)
-    y_test = y_test.permute(0,2,1)
+    # train_val_set = TensorDataset(y_train, X_train)
+    # test_set = TensorDataset(y_test, X_test)
     
-    train_val_set = TensorDataset(y_train, X_train)
-    test_set = TensorDataset(y_test, X_test)
-    
-    train_idx, val_idx = train_test_split(list(range(len(train_val_set))), test_size=0.3)
-    train_set = Subset(train_val_set, train_idx)
-    val_set = Subset(train_val_set, val_idx)
+    # train_idx, val_idx = train_test_split(list(range(len(train_val_set))), test_size=0.3)
+    # train_set = Subset(train_val_set, train_idx)
+    # val_set = Subset(train_val_set, val_idx)
     
     train_loader = DataLoader(train_set, batch_size=config['train']['batch_size'],
                               shuffle=True, drop_last=True, num_workers=0)
