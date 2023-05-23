@@ -42,7 +42,7 @@ if __name__ == "__main__":
                 new_name = input("Choose a new name: ")
                 args.name = new_name
                 foldername = "./check_points/" + args.name
-                if os.path.exits(foldername):
+                if os.path.exists(foldername):
                     status = False
 
 
