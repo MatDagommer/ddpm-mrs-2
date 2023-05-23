@@ -21,7 +21,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DDPM for ECG")
     parser.add_argument("--config", type=str, default="base.yaml")
     parser.add_argument('--device', default='cuda:0', help='Device')
-    parser.add_argument('--n_type', type=int, default=1, help='noise version')
+    # parser.add_argument('--n_type', type=int, default=1, help='noise version')
+    parser.add_argument('--name', default='test', help='model name.')
     args = parser.parse_args()
     print(args)
     
@@ -29,7 +30,22 @@ if __name__ == "__main__":
     with open(path, "r") as f:
         config = yaml.safe_load(f)
         
-    foldername = "./check_points/noise_type_" + str(args.n_type) + "/"
+    #foldername = "./check_points/noise_type_" + str(args.n_type) + "/"
+    foldername = "./check_points/" + args.name
+    if os.path.exists(foldername):
+        status = True
+        while status:
+            answer = input("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
+            if answer == "y":
+                status = False
+            elif answer == "n":
+                new_name = input("Choose a new name: ")
+                args.name = new_name
+                foldername = "./check_points/" + args.name
+                if os.path.exits(foldername):
+                    status = False
+
+
     print('folder:', foldername)
     os.makedirs(foldername, exist_ok=True)
     data_path = "/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/"
@@ -69,18 +85,18 @@ if __name__ == "__main__":
           valid_loader=val_loader, valid_epoch_interval=1, foldername=foldername)
     
     #eval final
-    print('eval final')
+    print('evaluation (validation set)')
     evaluate(model, val_loader, 1, args.device, foldername=foldername)
     
     #eval best
-    print('eval best')
-    foldername = "./check_points/noise_type_" + str(1) + "/"
-    output_path = foldername + "/model.pth"
-    model.load_state_dict(torch.load(output_path))
-    evaluate(model, val_loader, 1, args.device, foldername=foldername)
+    # print('evaluation (validation set)')
+    # foldername = "./check_points/noise_type_" + str(1) + "/"
+    # output_path = foldername + "/model.pth"
+    # model.load_state_dict(torch.load(output_path))
+    # evaluate(model, val_loader, 1, args.device, foldername=foldername)
     
     #don't use before final model is determined
-    print('eval test')
+    print('evaluation (test set)')
     evaluate(model, test_loader, 1, args.device, foldername=foldername)
     
     
