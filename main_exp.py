@@ -4,16 +4,12 @@ import datetime
 import json
 import yaml
 import os
-
 # from Data_Preparation.data_preparation import Data_Preparation
 from Data_Preparation.data_preparation_mrs import Data_Preparation
-
 from main_model import DDPM
 from denoising_model_small import ConditionalModel
 from utils import train, evaluate
-
 from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset
-
 from sklearn.model_selection import train_test_split
 
 
@@ -51,6 +47,7 @@ if __name__ == "__main__":
     data_path = "/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/"
     
     train_set, val_set, test_set = Data_Preparation(data_path)
+    print("DATASET TYPE: ",type(train_set))
     # [X_train, y_train, X_test, y_test] = Data_Preparation(args.n_type)
     
     # X_train = torch.FloatTensor(X_train)
@@ -98,13 +95,5 @@ if __name__ == "__main__":
     #don't use before final model is determined
     print('evaluation (test set)')
     evaluate(model, test_loader, 1, args.device, foldername=foldername)
-    
-    
-    
-    
-    
-    
-    
-    
     
     

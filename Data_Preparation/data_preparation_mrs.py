@@ -6,9 +6,11 @@ from scipy.io import savemat, loadmat
 from scipy.fft import fft, fftshift
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset
+from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset, Dataset
 
 
+# Data Preparation
+# Prepare train / val / test sets (subject separation)
 def Data_Preparation(data_path, n_channels=1):
 
     np.random.seed(1234)
@@ -137,3 +139,35 @@ def Data_Preparation(data_path, n_channels=1):
     print("Dataset ready.")
 
     return train_set, val_set, test_set
+
+# def SaveTrainData():
+    # load .pt datatensor
+
+
+class DynamicDataset(Dataset):
+    
+    def __init__(self, root_dir, transform=None):
+
+        # self.landmarks_frame = pd.read_csv(csv_file)
+        self.root_dir = root_dir
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.landmarks_frame)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_name = os.path.join(self.root_dir,
+                                self.landmarks_frame.iloc[idx, 0])
+        image = io.imread(img_name)
+        landmarks = self.landmarks_frame.iloc[idx, 1:]
+        landmarks = np.array([landmarks])
+        landmarks = landmarks.astype('float').reshape(-1, 2)
+        sample = {'image': image, 'landmarks': landmarks}
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
