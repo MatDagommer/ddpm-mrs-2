@@ -116,8 +116,8 @@ class DynamicDataset(Dataset):
         np.random.shuffle(sample_ids)
         noisy_batch = torch.mean(self.X_train[:, sample_ids, subject_idx], axis=1)
         clean_batch = self.y_train[:, subject_idx]
-        clean_batch = clean_batch.view(-1, 1, self.patch_size)
-        noisy_batch = noisy_batch.view(-1, 1, self.patch_size)
+        clean_batch = clean_batch.view(1, self.patch_size)
+        noisy_batch = noisy_batch.view(1, self.patch_size)
 
         return clean_batch, noisy_batch
 
