@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('--device', default='cuda:0', help='Device')
     # parser.add_argument('--n_type', type=int, default=1, help='noise version')
     parser.add_argument('--name', default='test', help='model name.')
-    parser.add_argument('--af', default=10, help='acceleration factor')
+    parser.add_argument('--af', type=int, default=10, help='acceleration factor')
     args = parser.parse_args()
     print(args)
     
