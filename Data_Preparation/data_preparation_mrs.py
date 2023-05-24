@@ -45,6 +45,9 @@ def Data_Preparation(data_path, acceleration_factor=10, N_channels=1):
     SpectraOFF = np.real(SpectraOFF)
     SpectraOFF_avg = np.real(SpectraOFF)
 
+    print("SpectraOFF.shape: ", SpectraOFF.shape)
+    print("SpectraOFF_avg.shape: ", SpectraOFF_avg.shape)
+
     _, _, N_subjects = SpectraOFF.shape
     acceleration_factor = 10
 
