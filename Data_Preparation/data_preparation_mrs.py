@@ -38,7 +38,14 @@ def Data_Preparation(data_path, acceleration_factor=10, N_channels=1):
 
     SpectraOFF = np.divide(SpectraOFF, repeat_)
     SpectraOFF_avg = np.mean(SpectraOFF, axis=1) #[length x #subjects]
-    patch_size, N_acq, N_subjects = SpectraOFF.shape
+    SpectraOFF = SpectraOFF[1000:1512]
+    SpectraOFF_avg = SpectraOFF_avg[1000:1512]
+
+    # IMPLEMENT SECOND CHANNEL HERE
+    SpectraOFF = np.real(SpectraOFF)
+    SpectraOFF_avg = np.real(SpectraOFF)
+
+    _, _, N_subjects = SpectraOFF.shape
     acceleration_factor = 10
 
     print("Separating train / val / test sets...")
@@ -106,8 +113,8 @@ class DynamicDataset(Dataset):
         np.random.shuffle(sample_ids)
         noisy_batch = torch.mean(self.X_train[:, sample_ids, subject_idx], axis=1)
         clean_batch = self.y_train[:, subject_idx]
-        clean_batch = clean_batch[:,:,1000:1512]
-        noisy_batch = noisy_batch[:,:,1000:1512]
+        clean_batch = clean_batch.view(-1, 1, self.patch_size)
+        noisy_batch = noisy_batch.view(-1, 1, self.patch_size)
 
         return clean_batch, noisy_batch
 
@@ -120,19 +127,14 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, N_channels, accelerat
     clean_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
     noisy_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
 
-    for i in range(N_subjects):
-        for j in tqdm(range(N_samples_per_subject)):
+    for i in tqdm(range(N_subjects)):
+        for j in range(N_samples_per_subject):
             sample_idx = np.random.randint(0, N_acq, N_acq // acceleration_factor)
             np.random.shuffle(sample_idx)
-            noisy_batch[i, j, :, 0] = np.real(np.mean(SpectraOFF[:, sample_idx, i], axis=1))
-            clean_batch[i, j, :, 0] = np.real(SpectraOFF_avg[:, i])
+            noisy_batch[i, j, :, 0] = np.mean(SpectraOFF[:, sample_idx, i], axis=1)
+            clean_batch[i, j, :, 0] = SpectraOFF_avg[:, i]
 
-    # CROPPING Spectrum to have length = 512
-    patch_size = 512
-    clean_batch = clean_batch[:,:,1000:1512]
-    noisy_batch = noisy_batch[:,:,1000:1512]
-
-    X = noisy_batch[idx].reshape(-1, patch_size, N_channels)
-    y = noisy_batch[idx].reshape(-1, patch_size, N_channels)
+    X = noisy_batch.reshape(-1, patch_size, N_channels)
+    y = noisy_batch.reshape(-1, patch_size, N_channels)
 
     return X, y
