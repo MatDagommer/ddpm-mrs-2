@@ -125,6 +125,10 @@ def evaluate(model, test_loader, shots, device, foldername=""):
                     "snr_in": snr_noise/eval_points,
                     "snr_out": snr_recon/eval_points,
                     "snr_improve": snr_improvement/eval_points,
+                    # "psnr": psnr/eval_points,
+                    # "ssim": ssim/eval_points,
+                    # "PCC": pcc/eval_points,
+                    # "SCC": scc/eval_points
                 },
                 refresh=True,
             )
