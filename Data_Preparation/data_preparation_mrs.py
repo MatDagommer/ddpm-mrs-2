@@ -109,7 +109,7 @@ class DynamicDataset(Dataset):
 
         return self.N_subjects * self.N_samples_per_subject
 
-    def __getitem__(self):
+    def __getitem__(self, index):
 
         subject_idx = np.random.randint(0, self.N_subjects)
         sample_ids = np.random.randint(0, self.N_acq, self.N_acq // self.acceleration_factor)
