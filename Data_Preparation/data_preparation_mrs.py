@@ -45,8 +45,8 @@ def Data_Preparation(data_path, acceleration_factor=10, N_channels=1):
     train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.4)
     val_idx, test_idx = train_test_split(val_idx, test_size=0.5)
 
-    X_train = SpectraOFF[train_idx]
-    y_train = SpectraOFF_avg[train_idx]
+    X_train = SpectraOFF[:, :, train_idx]
+    y_train = SpectraOFF_avg[:, train_idx]
     print("X_train shape: ", X_train.shape)
     print("y_train shape: ", y_train.shape)
 
