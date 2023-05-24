@@ -43,7 +43,7 @@ def Data_Preparation(data_path, acceleration_factor=10, N_channels=1):
 
     # IMPLEMENT SECOND CHANNEL HERE
     SpectraOFF = np.real(SpectraOFF)
-    SpectraOFF_avg = np.real(SpectraOFF)
+    SpectraOFF_avg = np.real(SpectraOFF_avg)
 
     print("SpectraOFF.shape: ", SpectraOFF.shape)
     print("SpectraOFF_avg.shape: ", SpectraOFF_avg.shape)
