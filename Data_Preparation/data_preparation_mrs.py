@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset, D
 # Data Preparation
 # Prepare train / val / test sets (subject separation)
 
-def Data_Preparation(data_path, acceleration_factor=10, N_channels=1):
+def Data_Preparation(data_path, acceleration_factor, N_channels=1):
 
     np.random.seed(1234)
 
@@ -49,7 +49,6 @@ def Data_Preparation(data_path, acceleration_factor=10, N_channels=1):
     print("SpectraOFF_avg.shape: ", SpectraOFF_avg.shape)
 
     _, _, N_subjects = SpectraOFF.shape
-    acceleration_factor = 10
 
     print("Separating train / val / test sets...")
     train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.4)

@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('--device', default='cuda:0', help='Device')
     # parser.add_argument('--n_type', type=int, default=1, help='noise version')
     parser.add_argument('--name', default='test', help='model name.')
+    parser.add_argument('--af', default=10, help='acceleration factor')
     args = parser.parse_args()
     print(args)
     
@@ -46,7 +47,8 @@ if __name__ == "__main__":
     os.makedirs(foldername, exist_ok=True)
     data_path = "/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/"
     
-    train_set, val_set, test_set = Data_Preparation(data_path)
+    acceleration_factor = args.af
+    train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor)
     print("DATASET TYPE: ",type(train_set))
     # [X_train, y_train, X_test, y_test] = Data_Preparation(args.n_type)
     
