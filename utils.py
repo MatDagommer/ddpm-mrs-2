@@ -28,6 +28,8 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
         with tqdm(train_loader) as it:
             for batch_no, (clean_batch, noisy_batch) in enumerate(it, start=1):
                 clean_batch, noisy_batch = clean_batch.to(device), noisy_batch.to(device)
+                print("clean_batch shape:", clean_batch.shape)
+                print("noisy_batch shape:", noisy_batch.shape)
                 optimizer.zero_grad()
                 
                 loss = model(clean_batch, noisy_batch)
