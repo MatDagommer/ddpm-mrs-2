@@ -1,5 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+import scipy
+import skimage
 
 def SSD(y, y_pred):
     return np.sum(np.square(y - y_pred), axis=1)  # axis 1 is the signal dimension
@@ -42,8 +44,18 @@ def SNR_improvement(y_in, y_out, y_clean):
     return SNR(y_clean, y_out)-SNR(y_clean, y_in)
     
     
+def PearsonCoef(x, y):
+    result = scipy.stats.pearsonr(x, y)
+    return result.statistic
+    
+def SpearmanCoef(x, y):
+    result = scipy.stats.spearmanr(x, y)    
+    return result.statistic
 
-    
-    
-    
-    
+def PSNR(x, y):
+    psnr = skimage.metrics.peak_signal_noise_ratio(x, y, data_range=np.max(np.concatenate((x, y))))
+    return psnr
+
+def SSIM(x, y):
+    ssim = skimage.metrics.structural_similarity(x, y, data_range=np.max(np.concatenate((x, y))))
+    return ssim
