@@ -54,35 +54,35 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1):
     train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.4)
     val_idx, test_idx = train_test_split(val_idx, test_size=0.5)
 
-    X_train = SpectraOFF[:, :, train_idx]
-    y_train = SpectraOFF_avg[:, train_idx]
-    print("X_train shape: ", X_train.shape)
-    print("y_train shape: ", y_train.shape)
+    noisy_batch_train = SpectraOFF[:, :, train_idx]
+    clean_batch_train = SpectraOFF_avg[:, train_idx]
+    print("noisy_batch_train shape: ", noisy_batch_train.shape)
+    print("clean_batch_train shape: ", clean_batch_train.shape)
 
     print("Starting validation dataset generation...")
     # [#samples x length x N_channels]
-    X_val, y_val = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, val_idx, N_channels, acceleration_factor)
+    clean_batch_val, noisy_batch_val = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, val_idx, N_channels, acceleration_factor)
     print("Starting validation dataset generation...")
-    X_test, y_test = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, test_idx, N_channels, acceleration_factor)
+    clean_batch_test, noisy_batch_test  = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, test_idx, N_channels, acceleration_factor)
 
     print("Converting data to tensors...")
 
-    X_train = torch.FloatTensor(X_train)
-    y_train = torch.FloatTensor(y_train)
+    noisy_batch_train = torch.FloatTensor(noisy_batch_train)
+    clean_batch_train = torch.FloatTensor(clean_batch_train)
 
-    X_val = torch.FloatTensor(X_val)
-    X_val = X_val.permute(0, 2, 1)
-    y_val = torch.FloatTensor(y_val)
-    y_val = y_val.permute(0, 2, 1)
+    clean_batch_val = torch.FloatTensor(clean_batch_val)
+    clean_batch_val = clean_batch_val.permute(0, 2, 1)
+    noisy_batch_val = torch.FloatTensor(noisy_batch_val)
+    noisy_batch_val = noisy_batch_val.permute(0, 2, 1)
 
-    X_test = torch.FloatTensor(X_test)
-    X_test = X_test.permute(0, 2, 1)
-    y_test = torch.FloatTensor(y_test)
-    y_test = y_test.permute(0, 2, 1)
+    clean_batch_test = torch.FloatTensor(clean_batch_test)
+    clean_batch_test = clean_batch_test.permute(0, 2, 1)
+    noisy_batch_test = torch.FloatTensor(noisy_batch_test)
+    noisy_batch_test = noisy_batch_test.permute(0, 2, 1)
 
-    train_set = DynamicDataset(X_train, y_train, acceleration_factor)
-    val_set = TensorDataset(X_val, y_val)
-    test_set = TensorDataset(X_test, y_test)
+    train_set = DynamicDataset(clean_batch_train, noisy_batch_train, acceleration_factor)
+    val_set = TensorDataset(clean_batch_val, noisy_batch_val)
+    test_set = TensorDataset(clean_batch_test, noisy_batch_test)
 
     torch.save(train_set, os.path.join(data_path, "train_set.pt"))
     torch.save(val_set, os.path.join(data_path, "val_set.pt"))
@@ -96,10 +96,10 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1):
 
 class DynamicDataset(Dataset):
     
-    def __init__(self, X_train, y_train, acceleration_factor, N_samples_per_subject=100):
+    def __init__(self, clean_batch_train, noisy_batch_train, acceleration_factor, N_samples_per_subject=100):
 
-        self.X_train = X_train
-        self.y_train = y_train
+        self.clean_batch_train = clean_batch_train
+        self.noisy_batch_train = noisy_batch_train
         self.patch_size, self.N_acq, self.N_subjects = self.X_train.shape
         self.acceleration_factor = acceleration_factor
         self.N_samples_per_subject = N_samples_per_subject
@@ -113,8 +113,8 @@ class DynamicDataset(Dataset):
         subject_idx = np.random.randint(0, self.N_subjects)
         sample_ids = np.random.randint(0, self.N_acq, self.N_acq // self.acceleration_factor)
         np.random.shuffle(sample_ids)
-        noisy_batch = torch.mean(self.X_train[:, sample_ids, subject_idx], axis=1)
-        clean_batch = self.y_train[:, subject_idx]
+        noisy_batch = torch.mean(self.noisy_batch_train[:, sample_ids, subject_idx], axis=1)
+        clean_batch = self.clean_batch_train[:, subject_idx]
         clean_batch = clean_batch.view(1, self.patch_size)
         noisy_batch = noisy_batch.view(1, self.patch_size)
 
@@ -136,7 +136,7 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, N_channels, accelerat
             noisy_batch[i, j, :, 0] = np.mean(SpectraOFF[:, sample_idx, i], axis=1)
             clean_batch[i, j, :, 0] = SpectraOFF_avg[:, i]
 
-    X = noisy_batch.reshape(-1, patch_size, N_channels)
-    y = clean_batch.reshape(-1, patch_size, N_channels)
+    noisy_batch = noisy_batch.reshape(-1, patch_size, N_channels)
+    clean_batch = clean_batch.reshape(-1, patch_size, N_channels)
 
-    return X, y
+    return clean_batch, noisy_batch
