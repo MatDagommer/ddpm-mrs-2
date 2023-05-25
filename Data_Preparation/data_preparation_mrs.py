@@ -100,7 +100,7 @@ class DynamicDataset(Dataset):
 
         self.clean_batch_train = clean_batch_train
         self.noisy_batch_train = noisy_batch_train
-        self.patch_size, self.N_acq, self.N_subjects = self.X_train.shape
+        self.patch_size, self.N_acq, self.N_subjects = self.noisy_batch_train.shape
         self.acceleration_factor = acceleration_factor
         self.N_samples_per_subject = N_samples_per_subject
         
