@@ -137,6 +137,6 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, N_channels, accelerat
             clean_batch[i, j, :, 0] = SpectraOFF_avg[:, i]
 
     X = noisy_batch.reshape(-1, patch_size, N_channels)
-    y = noisy_batch.reshape(-1, patch_size, N_channels)
+    y = clean_batch.reshape(-1, patch_size, N_channels)
 
     return X, y
