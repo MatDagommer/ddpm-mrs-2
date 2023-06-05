@@ -4,6 +4,9 @@ import datetime
 import json
 import yaml
 import os
+import time
+import sys
+import selectors
 # from Data_Preparation.data_preparation import Data_Preparation
 from Data_Preparation.data_preparation_mrs import Data_Preparation
 from main_model import DDPM
@@ -12,8 +15,25 @@ from utils import train, evaluate
 from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset
 from sklearn.model_selection import train_test_split
 
-print("TEST JUSTE POUR VOIR")
+def wait_for_input(timeout):
+    # Create a selector object
+    sel = selectors.DefaultSelector()
+    # Register the standard input file object for read events
+    sel.register(sys.stdin, selectors.EVENT_READ)
 
+    # Wait for user input or timeout
+    events = sel.select(timeout=timeout)
+
+    if events:
+        # User input received
+        for key, _ in events:
+            if key.fileobj is sys.stdin:
+                user_input = sys.stdin.readline().strip()
+                return user_input
+    else:
+        # Timeout reached, no user input
+        return None
+    
 
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser(description="DDPM for ECG")
@@ -34,7 +54,10 @@ if __name__ == "__main__":
     if os.path.exists(foldername):
         status = True
         while status:
-            answer = input("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
+            # answer = input("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
+            print("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
+            answer = wait_for_input(10)
+            
             if answer == "y":
                 status = False
             elif answer == "n":
