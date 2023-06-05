@@ -42,6 +42,8 @@ if __name__ == "__main__":
     # parser.add_argument('--n_type', type=int, default=1, help='noise version')
     parser.add_argument('--name', default='test', help='model name.')
     parser.add_argument('--af', type=int, default=10, help='acceleration factor')
+    parser.add_argument('--nchannels', type=int, default=2, help="number of channels. \
+                        1: real part only. 2: real + imaginary parts.")
     args = parser.parse_args()
     print(args)
     
@@ -102,7 +104,7 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_set, batch_size=50, num_workers=0)
     
     #base_model = ConditionalModel(64,8,4).to(args.device)
-    base_model = ConditionalModel(config['train']['feats']).to(args.device)
+    base_model = ConditionalModel(config['train']['feats'], args.nchannels).to(args.device)
     model = DDPM(base_model, config, args.device)
     
     train(model, config['train'], train_loader, args.device, 
