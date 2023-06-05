@@ -12,6 +12,8 @@ from utils import train, evaluate
 from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset
 from sklearn.model_selection import train_test_split
 
+print("TEST JUSTE POUR VOIR")
+
 
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser(description="DDPM for ECG")
