@@ -32,7 +32,7 @@ def wait_for_input(timeout):
                 return user_input
     else:
         # Timeout reached, no user input
-        return None
+        return "y"
     
 
 if __name__ == "__main__": 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
             # answer = input("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
             print("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
             answer = wait_for_input(10)
-            
+
             if answer == "y":
                 status = False
             elif answer == "n":
