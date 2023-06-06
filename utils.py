@@ -5,6 +5,8 @@ from tqdm import tqdm
 import pickle
 import metrics
 from main_model import EMA
+import scipy
+import skimage
 
 def train(model, config, train_loader, device, valid_loader=None, valid_epoch_interval=5, foldername=""):
     optimizer = Adam(model.parameters(), lr=config["lr"])
@@ -75,15 +77,36 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                     torch.save(model.state_dict(), output_path)
     
     torch.save(model.state_dict(), final_path)        
-    
+
+def compute_metrics(clean, noisy):
+    data_range = np.max(np.concatenate((clean.flatten(), noisy.flatten())))
+    pcc = scipy.stats.pearsonr(clean.flatten(), noisy.flatten())
+    pcc = pcc.statistic
+    scc = scipy.stats.spearmanr(clean.flatten(), noisy.flatten())
+    scc = scc.statistic
+    psnr = skimage.metrics.peak_signal_noise_ratio(clean.flatten(), noisy.flatten(), data_range=data_range)
+    ssim = skimage.metrics.structural_similarity(clean.flatten(), noisy.flatten(), data_range=data_range)
+    return psnr, ssim, pcc, scc
+
 def evaluate(model, test_loader, shots, device, foldername=""):
-    ssd_total = 0
-    mad_total = 0
-    prd_total = 0
-    cos_sim_total = 0
-    snr_noise = 0
-    snr_recon = 0
-    snr_improvement = 0
+    # ssd_total = 0
+    # mad_total = 0
+    # prd_total = 0
+    # cos_sim_total = 0
+    # snr_noise = 0
+    # snr_recon = 0
+    # snr_improvement = 0
+    psnr_total = 0
+    ssim_total = 0
+    pcc_total = 0
+    scc_total = 0
+    eval_points = 0
+
+    psnr_model_total = 0
+    ssim_model_total = 0
+    pcc_model_total = 0
+    scc_model_total = 0
+
     eval_points = 0
     
     restored_sig = []
@@ -105,30 +128,46 @@ def evaluate(model, test_loader, shots, device, foldername=""):
             clean_numpy = clean_batch.cpu().detach().numpy()
             noisy_numpy = noisy_batch.cpu().detach().numpy()
             
-            
             eval_points += len(output)
-            ssd_total += np.sum(metrics.SSD(clean_numpy, out_numpy))
-            mad_total += np.sum(metrics.MAD(clean_numpy, out_numpy))
-            prd_total += np.sum(metrics.PRD(clean_numpy, out_numpy))
-            cos_sim_total += np.sum(metrics.COS_SIM(clean_numpy, out_numpy))
-            snr_noise += np.sum(metrics.SNR(clean_numpy, noisy_numpy))
-            snr_recon += np.sum(metrics.SNR(clean_numpy, out_numpy))
-            snr_improvement += np.sum(metrics.SNR_improvement(noisy_numpy, out_numpy, clean_numpy))
+            psnr, ssim, pcc, scc = compute_metrics(clean_numpy, noisy_numpy)
+            psnr_total += psnr
+            ssim_total += ssim
+            pcc_total += pcc
+            scc_total += scc
+
+            psnr_model, ssim_model, pcc_model, scc_model = compute_metrics(clean_numpy, out_numpy)
+            psnr_model_total += psnr_model
+            ssim_model_total += ssim_model
+            pcc_model_total += pcc_model
+            scc_model_total += scc_model
+
+            # ssd_total += np.sum(metrics.SSD(clean_numpy, out_numpy))
+            # mad_total += np.sum(metrics.MAD(clean_numpy, out_numpy))
+            # prd_total += np.sum(metrics.PRD(clean_numpy, out_numpy))
+            # cos_sim_total += np.sum(metrics.COS_SIM(clean_numpy, out_numpy))
+            # snr_noise += np.sum(metrics.SNR(clean_numpy, noisy_numpy))
+            # snr_recon += np.sum(metrics.SNR(clean_numpy, out_numpy))
+            # snr_improvement += np.sum(metrics.SNR_improvement(noisy_numpy, out_numpy, clean_numpy))
+            
             restored_sig.append(out_numpy)
             
             it.set_postfix(
                 ordered_dict={
-                    "ssd_total": ssd_total/eval_points,
-                    "mad_total": mad_total/eval_points,
-                    "prd_total": prd_total/eval_points,
-                    "cos_sim_total": cos_sim_total/eval_points,
-                    "snr_in": snr_noise/eval_points,
-                    "snr_out": snr_recon/eval_points,
-                    "snr_improve": snr_improvement/eval_points,
-                    # "psnr": psnr/eval_points,
-                    # "ssim": ssim/eval_points,
-                    # "PCC": pcc/eval_points,
-                    # "SCC": scc/eval_points
+                    # "ssd_total": ssd_total/eval_points,
+                    # "mad_total": mad_total/eval_points,
+                    # "prd_total": prd_total/eval_points,
+                    # "cos_sim_total": cos_sim_total/eval_points,
+                    # "snr_in": snr_noise/eval_points,
+                    # "snr_out": snr_recon/eval_points,
+                    # "snr_improve": snr_improvement/eval_points,
+                    "psnr": psnr_total/eval_points,
+                    "ssim": ssim_total/eval_points,
+                    "pcc": pcc_total/eval_points,
+                    "scc": scc_total/eval_points,
+                    "psnr_model": psnr_model_total/eval_points,
+                    "ssim_model": ssim_model_total/eval_points,
+                    "pcc_model": pcc_model_total/eval_points,
+                    "scc_model": scc_model_total/eval_points
                 },
                 refresh=True,
             )
@@ -137,13 +176,28 @@ def evaluate(model, test_loader, shots, device, foldername=""):
     
     #np.save(foldername + '/denoised.npy', restored_sig)
     
-    print("ssd_total: ",ssd_total/eval_points)
-    print("mad_total: ", mad_total/eval_points,)
-    print("prd_total: ", prd_total/eval_points,)
-    print("cos_sim_total: ", cos_sim_total/eval_points,)
-    print("snr_in: ", snr_noise/eval_points,)
-    print("snr_out: ", snr_recon/eval_points,)
-    print("snr_improve: ", snr_improvement/eval_points,)
+    # print("ssd_total: ",ssd_total/eval_points)
+    # print("mad_total: ", mad_total/eval_points,)
+    # print("prd_total: ", prd_total/eval_points,)
+    # print("cos_sim_total: ", cos_sim_total/eval_points,)
+    # print("snr_in: ", snr_noise/eval_points,)
+    # print("snr_out: ", snr_recon/eval_points,)
+    # print("snr_improve: ", snr_improvement/eval_points,)
+
+    print("psnr_total: ", psnr_total/eval_points)
+    print("ssim_total: ", ssim_total/eval_points)
+    print("pcc_total: ", pcc_total/eval_points)
+    print("scc_total: ", scc_total/eval_points)
+    print("psnr_model_total: ", psnr_model_total/eval_points)
+    print("ssim_model_total: ", ssim_model_total/eval_points)
+    print("pcc_model_total: ", pcc_model_total/eval_points)
+    print("scc_model_total: ", scc_model_total/eval_points)
+
+    list_metric = [psnr_total, ssim_total, pcc_total, scc_total, psnr_model_total, ssim_model_total, \
+                   pcc_model_total, scc_model_total]
+    list_metric = [i / eval_points for i in list_metric]
+
+    return list_metric
     
     
     
