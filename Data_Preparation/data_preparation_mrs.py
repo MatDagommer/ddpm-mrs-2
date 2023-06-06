@@ -129,7 +129,7 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, N_channels, accelerat
     clean_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
     noisy_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
 
-    for i in tqdm(range(N_subjects)):
+    for i in tqdm(range(N_subjects), leave=False):
         for j in range(N_samples_per_subject):
             sample_idx = np.random.randint(0, N_acq, N_acq // acceleration_factor)
             np.random.shuffle(sample_idx)
