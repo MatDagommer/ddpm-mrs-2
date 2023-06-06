@@ -128,7 +128,7 @@ def evaluate(model, test_loader, shots, device, foldername=""):
             clean_numpy = clean_batch.cpu().detach().numpy()
             noisy_numpy = noisy_batch.cpu().detach().numpy()
             
-            eval_points += len(output)
+            eval_points += 1 # len(output)
             psnr, ssim, pcc, scc = compute_metrics(clean_numpy, noisy_numpy)
             psnr_total += psnr
             ssim_total += ssim
