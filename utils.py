@@ -88,7 +88,15 @@ def compute_metrics(clean, noisy):
     ssim = skimage.metrics.structural_similarity(clean.flatten(), noisy.flatten(), data_range=data_range)
     return psnr, ssim, pcc, scc
 
-def evaluate(model, test_loader, shots, device, foldername=""):
+def lse_adjust(recon_batch, noisy_batch):
+    recon_batch_adjusted = np.zeros_like(recon_batch)
+    for i in range(recon_batch.shape[0]):
+        X = np.vstack((np.ones_like(recon_batch[i, 0]), recon_batch[i, 0])).T
+        beta, alpha = np.linalg.pinv(X) @ noisy_batch[i, 0].T
+        recon_batch_adjusted[i, 0] = alpha * recon_batch[i, 0] + beta
+    return recon_batch_adjusted
+
+def evaluate(model, test_loader, shots, device, lse=False, foldername=""):
     # ssd_total = 0
     # mad_total = 0
     # prd_total = 0
@@ -128,6 +136,9 @@ def evaluate(model, test_loader, shots, device, foldername=""):
             clean_numpy = clean_batch.cpu().detach().numpy()
             noisy_numpy = noisy_batch.cpu().detach().numpy()
             
+            if lse:
+                out_numpy = lse_adjust(out_numpy, noisy_numpy)
+
             eval_points += 1 # len(output)
             psnr, ssim, pcc, scc = compute_metrics(clean_numpy, noisy_numpy)
             psnr_total += psnr
