@@ -22,6 +22,8 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
     )
     
     best_valid_loss = 1e10
+
+    training_curves = {"train": [], "valid": []}
     
     for epoch_no in range(config["epochs"]):
         avg_loss = 0
@@ -50,6 +52,7 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                     refresh=True,
                 )
             
+            training_curves["train"].append( avg_loss / batch_no )
             lr_scheduler.step()
             
         if valid_loader is not None and (epoch_no + 1) % valid_epoch_interval == 0:
@@ -75,8 +78,14 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 
                 if foldername != "":
                     torch.save(model.state_dict(), output_path)
+                
+            training_curves["valid"].append( avg_loss_valid / batch_no )
     
-    torch.save(model.state_dict(), final_path)        
+    torch.save(model.state_dict(), final_path) 
+    
+    with open(foldername + "/training_curves", "wb") as file:
+        pickle.dump(training_curves, file)    
+   
 
 def compute_metrics(clean, noisy):
     data_range = np.max(np.concatenate((clean.flatten(), noisy.flatten())))
