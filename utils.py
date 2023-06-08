@@ -83,7 +83,7 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
     
     torch.save(model.state_dict(), final_path) 
     
-    with open(foldername + "/training_curves", "wb") as file:
+    with open(foldername + "/training_curves.pkl", "wb") as file:
         pickle.dump(training_curves, file)    
    
 
