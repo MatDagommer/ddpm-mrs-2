@@ -62,7 +62,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=2):
     _, _, N_subjects, _ = SpectraOFF.shape
 
     print("Separating train / val / test sets...")
-    train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.4)
+    train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.2)
     val_idx, test_idx = train_test_split(val_idx, test_size=0.5)
 
     noisy_batch_train = SpectraOFF[:, :, train_idx]
@@ -111,7 +111,7 @@ class DynamicDataset(Dataset):
 
         self.clean_batch_train = clean_batch_train
         self.noisy_batch_train = noisy_batch_train
-        self.patch_size, self.N_acq, self.N_subjects = self.noisy_batch_train.shape
+        self.patch_size, self.N_acq, self.N_subjects, self.N_channels = self.noisy_batch_train.shape
         self.acceleration_factor = acceleration_factor
         self.N_samples_per_subject = N_samples_per_subject
         
@@ -126,8 +126,8 @@ class DynamicDataset(Dataset):
         np.random.shuffle(sample_ids)
         noisy_batch = torch.mean(self.noisy_batch_train[:, sample_ids, subject_idx], axis=1)
         clean_batch = self.clean_batch_train[:, subject_idx]
-        clean_batch = clean_batch.view(1, self.patch_size)
-        noisy_batch = noisy_batch.view(1, self.patch_size)
+        clean_batch = clean_batch.view(self.N_channels, self.patch_size)
+        noisy_batch = noisy_batch.view(self.N_channels, self.patch_size)
 
         return clean_batch, noisy_batch
 
