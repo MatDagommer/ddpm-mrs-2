@@ -39,8 +39,9 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=2):
     SpectraOFF_ = np.copy(SpectraOFF)
     SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
     SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF_, axis=1), axis=-1) #[length x #subjects]
-    SpectraOFF = SpectraOFF[1000:1512]
-    SpectraOFF_avg = SpectraOFF_avg[1000:1512]
+    
+    # SpectraOFF = SpectraOFF[1000:1512]
+    # SpectraOFF_avg = SpectraOFF_avg[1000:1512]
 
 
     # IMPLEMENT SECOND CHANNEL HERE
