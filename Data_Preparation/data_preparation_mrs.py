@@ -36,8 +36,9 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=2):
     repeat_ = np.repeat(np.expand_dims(repeat_, axis=-1), SpectraOFF.shape[1], axis=-1)
     repeat_ = np.transpose(repeat_, (1, 2, 0))
 
+    SpectraOFF_ = np.copy(SpectraOFF)
     SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
-    SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF, axis=1), axis=-1) #[length x #subjects]
+    SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF_, axis=1), axis=-1) #[length x #subjects]
     SpectraOFF = SpectraOFF[1000:1512]
     SpectraOFF_avg = SpectraOFF_avg[1000:1512]
 
@@ -56,7 +57,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=2):
 
     print("SpectraOFF shape: ", SpectraOFF.shape)
     print("SpectraOFF_avg shape: ", SpectraOFF_avg.shape)
-    
+
 
     _, _, N_subjects, _ = SpectraOFF.shape
 
