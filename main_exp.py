@@ -20,7 +20,8 @@ def wait_for_input(timeout):
     sel = selectors.DefaultSelector()
     # Register the standard input file object for read events
     sel.register(sys.stdin, selectors.EVENT_READ)
-
+    print("EVENT_READ: ", selectors.EVENT_READ)
+    time.sleep(5)
     # Wait for user input or timeout
     events = sel.select(timeout=timeout)
 
@@ -44,6 +45,8 @@ if __name__ == "__main__":
     parser.add_argument('--af', type=int, default=10, help='acceleration factor')
     parser.add_argument('--nchannels', type=int, default=2, help="number of channels. \
                         1: real part only. 2: real + imaginary parts.")
+    parser.add_argument('--datapath', default="/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/", \
+                        help="data path.")
     args = parser.parse_args()
     print(args)
     
@@ -72,7 +75,7 @@ if __name__ == "__main__":
 
     print('folder:', foldername)
     os.makedirs(foldername, exist_ok=True)
-    data_path = "/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/"
+    data_path = args.data_path
     
     acceleration_factor = args.af
     train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor)

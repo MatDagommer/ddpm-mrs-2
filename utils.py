@@ -145,20 +145,3 @@ def evaluate(model, test_loader, shots, device, foldername=""):
     print("snr_out: ", snr_recon/eval_points,)
     print("snr_improve: ", snr_improvement/eval_points,)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
