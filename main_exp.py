@@ -45,17 +45,22 @@ if __name__ == "__main__":
     # parser.add_argument('--n_type', type=int, default=1, help='noise version')
     parser.add_argument('--name', default='test', help='model name.')
     parser.add_argument('--af', type=int, default=10, help='acceleration factor')
-    parser.add_argument('--nchannels', type=int, default=2, help="number of channels. \
+    parser.add_argument('--channels', type=int, default=2, help="number of channels. \
                         1: real part only. 2: real + imaginary parts.")
     parser.add_argument('--datapath', default="/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/", \
                         help="data path.")
+    parser.add_argument('--epochs', type=int, default=400, help="number of epochs.")
     args = parser.parse_args()
     print(args)
     
     path = "config/" + args.config
     with open(path, "r") as f:
         config = yaml.safe_load(f)
-        
+
+    if config['train']['epochs'] != args.epochs:
+        config['train']['epochs'] = args.epochs 
+        print("Set the number of epochs to %d."%args.epochs)    
+
     #foldername = "./check_points/noise_type_" + str(args.n_type) + "/"
     foldername = "./check_points/" + args.name
     if os.path.exists(foldername):
@@ -85,7 +90,7 @@ if __name__ == "__main__":
     data_path = args.datapath
     
     acceleration_factor = args.af
-    train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor, N_channels=args.nchannels)
+    train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor, N_channels=args.channels)
     print("DATASET TYPE: ",type(train_set))
     # [X_train, y_train, X_test, y_test] = Data_Preparation(args.n_type)
     
@@ -114,7 +119,7 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_set, batch_size=50, num_workers=0)
     
     #base_model = ConditionalModel(64,8,4).to(args.device)
-    base_model = ConditionalModel(config['train']['feats'], args.nchannels).to(args.device)
+    base_model = ConditionalModel(config['train']['feats'], args.channels).to(args.device)
     model = DDPM(base_model, config, args.device)
     
     train(model, config['train'], train_loader, args.device, 
