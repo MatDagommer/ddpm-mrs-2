@@ -7,6 +7,7 @@ import os
 import time
 import sys
 import selectors
+from pytimedinput import timedInput
 # from Data_Preparation.data_preparation import Data_Preparation
 from Data_Preparation.data_preparation_mrs import Data_Preparation
 from main_model import DDPM
@@ -24,6 +25,7 @@ def wait_for_input(timeout):
     time.sleep(5)
     # Wait for user input or timeout
     events = sel.select(timeout=timeout)
+
 
     if events:
         # User input received
@@ -59,9 +61,14 @@ if __name__ == "__main__":
     if os.path.exists(foldername):
         status = True
         while status:
-            # answer = input("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
-            print("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
-            answer = wait_for_input(10)
+            answer, timedOut = timedInput("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
+            # print("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
+            # answer = wait_for_input(10)
+            if(timedOut):
+                print("Timed out when waiting for input. Erasing model.")
+                answer = "y"
+            else:
+                print(f"User-input: '{answer}'")
 
             if answer == "y":
                 status = False
@@ -75,7 +82,7 @@ if __name__ == "__main__":
 
     print('folder:', foldername)
     os.makedirs(foldername, exist_ok=True)
-    data_path = args.data_path
+    data_path = args.datapath
     
     acceleration_factor = args.af
     train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor)
