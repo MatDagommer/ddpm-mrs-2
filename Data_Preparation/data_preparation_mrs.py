@@ -54,6 +54,10 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=2):
     # SpectraOFF: [length, N_acq, N_subj, N_channels]
     # SpectraOFF_avg: [length, N_subj, N_channels]
 
+    print("SpectraOFF shape: ", SpectraOFF.shape)
+    print("SpectraOFF_avg shape: ", SpectraOFF_avg.shape)
+    
+
     _, _, N_subjects, _ = SpectraOFF.shape
 
     print("Separating train / val / test sets...")
