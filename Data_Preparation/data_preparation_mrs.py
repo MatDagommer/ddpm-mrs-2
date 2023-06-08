@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset, D
 # Data Preparation
 # Prepare train / val / test sets (subject separation)
 
-def Data_Preparation(data_path, acceleration_factor, N_channels=1):
+def Data_Preparation(data_path, acceleration_factor, N_channels=2):
 
     np.random.seed(1234)
 
@@ -36,22 +36,33 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1):
     repeat_ = np.repeat(np.expand_dims(repeat_, axis=-1), SpectraOFF.shape[1], axis=-1)
     repeat_ = np.transpose(repeat_, (1, 2, 0))
 
-    SpectraOFF = np.divide(SpectraOFF, repeat_)
-    SpectraOFF_avg = np.mean(SpectraOFF, axis=1) #[length x #subjects]
+    SpectraOFF_ = np.copy(SpectraOFF)
+    SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
+    SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF_, axis=1), axis=-1) #[length x #subjects]
     SpectraOFF = SpectraOFF[1000:1512]
     SpectraOFF_avg = SpectraOFF_avg[1000:1512]
 
+
     # IMPLEMENT SECOND CHANNEL HERE
-    SpectraOFF = np.real(SpectraOFF)
-    SpectraOFF_avg = np.real(SpectraOFF_avg)
+    if N_channels == 1:
+        SpectraOFF = np.real(SpectraOFF)
+        SpectraOFF_avg = np.real(SpectraOFF_avg)
+    elif N_channels == 2:  
+        SpectraOFF = np.concatenate((np.real(SpectraOFF), np.imag(SpectraOFF)), axis=-1)
+        SpectraOFF_avg = np.concatenate((np.real(SpectraOFF_avg), np.imag(SpectraOFF_avg)), axis=-1)
 
-    print("SpectraOFF.shape: ", SpectraOFF.shape)
-    print("SpectraOFF_avg.shape: ", SpectraOFF_avg.shape)
+    # OUTPUT SHAPES:
+    # SpectraOFF: [length, N_acq, N_subj, N_channels]
+    # SpectraOFF_avg: [length, N_subj, N_channels]
 
-    _, _, N_subjects = SpectraOFF.shape
+    print("SpectraOFF shape: ", SpectraOFF.shape)
+    print("SpectraOFF_avg shape: ", SpectraOFF_avg.shape)
+
+
+    _, _, N_subjects, _ = SpectraOFF.shape
 
     print("Separating train / val / test sets...")
-    train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.4)
+    train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.2)
     val_idx, test_idx = train_test_split(val_idx, test_size=0.5)
 
     noisy_batch_train = SpectraOFF[:, :, train_idx]
@@ -60,10 +71,10 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1):
     print("clean_batch_train shape: ", clean_batch_train.shape)
 
     print("Starting validation dataset generation...")
-    # [#samples x length x N_channels]
-    clean_batch_val, noisy_batch_val = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, val_idx, N_channels, acceleration_factor)
+    # OUTPUT [#samples x length x N_channels]
+    clean_batch_val, noisy_batch_val = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, val_idx, acceleration_factor)
     print("Starting validation dataset generation...")
-    clean_batch_test, noisy_batch_test  = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, test_idx, N_channels, acceleration_factor)
+    clean_batch_test, noisy_batch_test  = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, test_idx, acceleration_factor)
 
     print("Converting data to tensors...")
 
@@ -100,7 +111,7 @@ class DynamicDataset(Dataset):
 
         self.clean_batch_train = clean_batch_train
         self.noisy_batch_train = noisy_batch_train
-        self.patch_size, self.N_acq, self.N_subjects = self.noisy_batch_train.shape
+        self.patch_size, self.N_acq, self.N_subjects, self.N_channels = self.noisy_batch_train.shape
         self.acceleration_factor = acceleration_factor
         self.N_samples_per_subject = N_samples_per_subject
         
@@ -115,15 +126,15 @@ class DynamicDataset(Dataset):
         np.random.shuffle(sample_ids)
         noisy_batch = torch.mean(self.noisy_batch_train[:, sample_ids, subject_idx], axis=1)
         clean_batch = self.clean_batch_train[:, subject_idx]
-        clean_batch = clean_batch.view(1, self.patch_size)
-        noisy_batch = noisy_batch.view(1, self.patch_size)
+        clean_batch = clean_batch.view(self.N_channels, self.patch_size)
+        noisy_batch = noisy_batch.view(self.N_channels, self.patch_size)
 
         return clean_batch, noisy_batch
 
 
-def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, N_channels, acceleration_factor, N_samples_per_subject=100):
+def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, acceleration_factor, N_samples_per_subject=100):
     
-    patch_size, N_acq, _ = SpectraOFF.shape
+    patch_size, N_acq, _, N_channels = SpectraOFF.shape
     N_subjects = len(idx)
 
     clean_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
@@ -133,8 +144,8 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, N_channels, accelerat
         for j in range(N_samples_per_subject):
             sample_idx = np.random.randint(0, N_acq, N_acq // acceleration_factor)
             np.random.shuffle(sample_idx)
-            noisy_batch[i, j, :, 0] = np.mean(SpectraOFF[:, sample_idx, i], axis=1)
-            clean_batch[i, j, :, 0] = SpectraOFF_avg[:, i]
+            noisy_batch[i, j, :, :] = np.mean(SpectraOFF[:, sample_idx, i, :], axis=1)
+            clean_batch[i, j, :, :] = SpectraOFF_avg[:, i, :]
 
     noisy_batch = noisy_batch.reshape(-1, patch_size, N_channels)
     clean_batch = clean_batch.reshape(-1, patch_size, N_channels)
