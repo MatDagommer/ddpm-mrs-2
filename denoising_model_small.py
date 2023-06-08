@@ -101,6 +101,9 @@ class Bridge(nn.Module):
 class ConditionalModel(nn.Module):
     def __init__(self, feats=64, N_channels=1):
         super(ConditionalModel, self).__init__()
+
+        self.N_channels = N_channels
+
         self.stream_x = nn.ModuleList([
             nn.Sequential(Conv1d(N_channels, feats, 9, padding=4, padding_mode='reflect'),
                           nn.LeakyReLU(0.2)),
@@ -112,7 +115,7 @@ class ConditionalModel(nn.Module):
         ])
         
         self.stream_cond = nn.ModuleList([
-            nn.Sequential(Conv1d(1, feats, 9, padding=4, padding_mode='reflect'),
+            nn.Sequential(Conv1d(N_channels, feats, 9, padding=4, padding_mode='reflect'),
                           nn.LeakyReLU(0.2)),
             HNFBlock(feats, feats, 1),
             HNFBlock(feats, feats, 2),
