@@ -85,7 +85,7 @@ if __name__ == "__main__":
     data_path = args.datapath
     
     acceleration_factor = args.af
-    train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor)
+    train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor, N_channels=args.nchannels)
     print("DATASET TYPE: ",type(train_set))
     # [X_train, y_train, X_test, y_test] = Data_Preparation(args.n_type)
     
