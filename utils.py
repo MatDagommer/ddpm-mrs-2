@@ -41,18 +41,16 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 
                 if type(model) == DDPM:
                     loss = model(clean_batch, noisy_batch)
-                if type(model) == DnResUNet:
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.model.parameters(), 1.0)
+
+                elif type(model) == DnResUNet:
                     recon_batch = model(noisy_batch)
                     loss_fn = torch.nn.L1Loss()
-
-                    print("NOISY SIZE: ", noisy_batch.size())
-                    print("RECON SIZE: ", recon_batch.size())
-                    print("CLEAN SIZE: ", clean_batch.size())
-                    
                     loss = loss_fn(recon_batch, clean_batch)
-
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.model.parameters(), 1.0)
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                
                 optimizer.step()
                 avg_loss += loss.item()
                 
@@ -76,7 +74,11 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 with tqdm(valid_loader) as it:
                     for batch_no, (clean_batch, noisy_batch) in enumerate(it, start=1):
                         clean_batch, noisy_batch = clean_batch.to(device), noisy_batch.to(device)
-                        loss = model(clean_batch, noisy_batch)
+                        if type(model) == DDPM:
+                            loss = model(clean_batch, noisy_batch)
+                        elif type(model) == DnResUNet:
+                            recon_batch = model(noisy_batch)
+                            loss = torch.nn.L1Loss(recon_batch, clean_batch)
                         avg_loss_valid += loss.item()
                         it.set_postfix(
                             ordered_dict={

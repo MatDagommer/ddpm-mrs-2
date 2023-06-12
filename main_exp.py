@@ -135,19 +135,22 @@ if __name__ == "__main__":
     train(model, config['train'], train_loader, args.device, 
           valid_loader=val_loader, valid_epoch_interval=1, foldername=foldername)
     
-    #eval final
-    print('evaluation (validation set)')
-    evaluate(model, val_loader, 1, args.device, foldername=foldername)
+    if type(model) == DDPM:
+        #eval final
+        print('evaluation (validation set)')
+        evaluate(model, val_loader, 1, args.device, foldername=foldername)
+        
+        #eval best
+        # print('evaluation (validation set)')
+        # foldername = "./check_points/noise_type_" + str(1) + "/"
+        # output_path = foldername + "/model.pth"
+        # model.load_state_dict(torch.load(output_path))
+        # evaluate(model, val_loader, 1, args.device, foldername=foldername)
+        
+        #don't use before final model is determined
+        print('evaluation (test set)')
+        evaluate(model, test_loader, 1, args.device, foldername=foldername)
     
-    #eval best
-    # print('evaluation (validation set)')
-    # foldername = "./check_points/noise_type_" + str(1) + "/"
-    # output_path = foldername + "/model.pth"
-    # model.load_state_dict(torch.load(output_path))
-    # evaluate(model, val_loader, 1, args.device, foldername=foldername)
-    
-    #don't use before final model is determined
-    print('evaluation (test set)')
-    evaluate(model, test_loader, 1, args.device, foldername=foldername)
+    print("Training completed.")
     
     
