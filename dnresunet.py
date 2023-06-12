@@ -16,55 +16,52 @@ class DnResUNet(nn.Module):
         self.n_channels = n_channels
         self.n_out = n_out
 
-        # self.inputL = ConvBlock(n_channels, 32)
-        # self.down1 = Down(32, 64)
-        # self.down2 = Down(64, 128)
-        # self.down3 = Down(128, 256)
-        # self.down4 = Down(256, 512)
-        # self.down5 = Down(512, 1024)
-        # self.conv = ConvBlock(1024, 1024)
-        # self.up1 = Up(1024, 512)
-        # self.up2 = Up(512, 256)
-        # self.up3 = Up(256, 128)
-        # self.up4 = Up(128, 64)
-        # self.up5 = Up(64, 32)
+        self.inputL = ConvBlock(n_channels, 32).to(device)
+        self.down1 = Down(32, 64).to(device)
+        self.down2 = Down(64, 128).to(device)
+        self.down3 = Down(128, 256).to(device)
+        self.down4 = Down(256, 512).to(device)
+        self.down5 = Down(512, 1024).to(device)
+        self.conv = ConvBlock(1024, 1024).to(device)
+        self.up1 = Up(1024, 512).to(device)
+        self.up2 = Up(512, 256).to(device)
+        self.up3 = Up(256, 128).to(device)
+        self.up4 = Up(128, 64).to(device)
+        self.up5 = Up(64, 32).to(device)
 
-        seq = [
-            ConvBlock(n_channels, 32),
-            Down(32, 64),
-            Down(64, 128),
-            Down(128, 256),
-            Down(256, 512),
-            Down(512, 1024),
-            ConvBlock(1024, 1024),
-            Up(1024, 512),
-            Up(512, 256),
-            Up(256, 128),
-            Up(128, 64),
-            Up(64, 32),
-        ]
+        # seq = [
+        #     ConvBlock(n_channels, 32),
+        #     Down(32, 64),
+        #     Down(64, 128),
+        #     Down(128, 256),
+        #     Down(256, 512),
+        #     Down(512, 1024),
+        #     ConvBlock(1024, 1024),
+        #     Up(1024, 512),
+        #     Up(512, 256),
+        #     Up(256, 128),
+        #     Up(128, 64),
+        #     Up(64, 32),
+        # ]
 
-        self.seq = [fn.to(device) for fn in seq]
+        # self.seq = [fn.to(device) for fn in seq]
+        
         self.outputL = OutConv(32, n_out).to(device)
         
     def forward(self, x):
-        # x1 = self.inputL(x)
-        # x2 = self.down1(x1)
-        # x3 = self.down2(x2)
-        # x4 = self.down3(x3)
-        # x5 = self.down4(x4)
-        # b = self.down5(x5)
-        # b = self.conv(b)
-        # x = self.up1(b, x5)
-        # x = self.up2(x, x4)
-        # x = self.up3(x, x3)
-        # x = self.up4(x, x2)
-        # x = self.up5(x, x1)
 
-        for fn in self.seq:
-            x = fn(x)
-        
-        x = self.outputL(x)
+        x1 = self.inputL(x)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        x4 = self.down3(x3)
+        x5 = self.down4(x4)
+        b = self.down5(x5)
+        b = self.conv(b)
+        x = self.up1(b, x5)
+        x = self.up2(x, x4)
+        x = self.up3(x, x3)
+        x = self.up4(x, x2)
+        x = self.up5(x, x1)
         
         return x
     
