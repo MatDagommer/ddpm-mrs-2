@@ -78,7 +78,8 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                             loss = model(clean_batch, noisy_batch)
                         elif type(model) == DnResUNet:
                             recon_batch = model(noisy_batch)
-                            loss = torch.nn.L1Loss(recon_batch, clean_batch)
+                            loss_fn = torch.nn.L1Loss()
+                            loss = loss_fn(recon_batch, clean_batch)
                         avg_loss_valid += loss.item()
                         it.set_postfix(
                             ordered_dict={
