@@ -44,6 +44,11 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 if type(model) == DnResUNet:
                     recon_batch = model(noisy_batch)
                     loss_fn = torch.nn.L1Loss()
+
+                    print("NOISY SIZE: ", noisy_batch.size())
+                    print("RECON SIZE: ", recon_batch.size())
+                    print("CLEAN SIZE: ", clean_batch.size())
+                    
                     loss = loss_fn(recon_batch, clean_batch)
 
                 loss.backward()
