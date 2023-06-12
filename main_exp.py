@@ -57,6 +57,7 @@ if __name__ == "__main__":
 
     if args.model == "cnn":
         args.config = "dnresunet.yaml"
+        args.N_channels = 2
     
     path = "config/" + args.config
     with open(path, "r") as f:

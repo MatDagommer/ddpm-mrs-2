@@ -7,6 +7,8 @@ import metrics
 from main_model import EMA
 import scipy
 import skimage
+from dnresunet import DnResUNet
+from main_model import DDPM
 
 def train(model, config, train_loader, device, valid_loader=None, valid_epoch_interval=1, foldername=""):
     optimizer = Adam(model.parameters(), lr=config["lr"])
@@ -37,7 +39,13 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 # print("noisy_batch shape:", noisy_batch.shape)
                 optimizer.zero_grad()
                 
-                loss = model(clean_batch, noisy_batch)
+                if type(model) == DDPM:
+                    loss = model(clean_batch, noisy_batch)
+                if type(model) == DnResUNet:
+                    recon_batch = model(noisy_batch)
+                    loss_fn = torch.nn.L1Loss()
+                    loss = loss_fn(recon_batch, clean_batch)
+
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.model.parameters(), 1.0)
                 optimizer.step()
