@@ -8,8 +8,9 @@ from main_model import EMA
 import scipy
 import skimage
 
-def train(model, config, train_loader, device, valid_loader=None, valid_epoch_interval=5, foldername=""):
+def train(model, config, train_loader, device, valid_loader=None, valid_epoch_interval=1, foldername=""):
     optimizer = Adam(model.parameters(), lr=config["lr"])
+    
     #ema = EMA(0.9)
     #ema.register(model)
     

@@ -15,6 +15,7 @@ from denoising_model_small import ConditionalModel
 from utils import train, evaluate
 from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset
 from sklearn.model_selection import train_test_split
+from dnresunet import DnResUNet
 
 def wait_for_input(timeout):
     # Create a selector object
@@ -45,21 +46,26 @@ if __name__ == "__main__":
     # parser.add_argument('--n_type', type=int, default=1, help='noise version')
     parser.add_argument('--name', default='test', help='model name.')
     parser.add_argument('--af', type=int, default=10, help='acceleration factor')
-    parser.add_argument('--channels', type=int, default=2, help="number of channels. \
+    parser.add_argument('--channels', type=int, default=1, help="number of channels. \
                         1: real part only. 2: real + imaginary parts.")
     parser.add_argument('--datapath', default="/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/", \
                         help="data path.")
     parser.add_argument('--epochs', type=int, default=400, help="number of epochs.")
+    parser.add_argument('--model', type=str, default="ddpm", help="Model to be used for training. Default: ddpm. Other options: cnn")
     args = parser.parse_args()
     print(args)
+
+    if args.model == "dnresunet":
+        args.config = "dnresunet.yaml"
     
     path = "config/" + args.config
     with open(path, "r") as f:
         config = yaml.safe_load(f)
 
-    if config['train']['epochs'] != args.epochs:
-        config['train']['epochs'] = args.epochs 
-        print("Set the number of epochs to %d."%args.epochs)    
+    if args.model == "ddpm":
+        if config['train']['epochs'] != args.epochs:
+            config['train']['epochs'] = args.epochs 
+            print("Set the number of epochs to %d."%args.epochs)    
 
     #foldername = "./check_points/noise_type_" + str(args.n_type) + "/"
     foldername = "./check_points/" + args.name
@@ -118,9 +124,12 @@ if __name__ == "__main__":
     val_loader = DataLoader(val_set, batch_size=config['train']['batch_size'], drop_last=True, num_workers=0)
     test_loader = DataLoader(test_set, batch_size=50, num_workers=0)
     
-    #base_model = ConditionalModel(64,8,4).to(args.device)
-    base_model = ConditionalModel(config['train']['feats'], args.channels).to(args.device)
-    model = DDPM(base_model, config, args.device)
+    if args.model == "ddpm":
+        #base_model = ConditionalModel(64,8,4).to(args.device)
+        base_model = ConditionalModel(config['train']['feats'], args.channels).to(args.device)
+        model = DDPM(base_model, config, args.device)
+    elif args.model == "cnn":
+        model = DnResUNet('dnresunet_model', 2, 2)
     
     train(model, config['train'], train_loader, args.device, 
           valid_loader=val_loader, valid_epoch_interval=1, foldername=foldername)
