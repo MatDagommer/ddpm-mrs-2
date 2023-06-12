@@ -130,7 +130,7 @@ if __name__ == "__main__":
         base_model = ConditionalModel(config['train']['feats'], args.channels).to(args.device)
         model = DDPM(base_model, config, args.device)
     elif args.model == "cnn":
-        model = DnResUNet('dnresunet_model', 2, 2)
+        model = DnResUNet('dnresunet_model', 2, 2, args.device)
     
     train(model, config['train'], train_loader, args.device, 
           valid_loader=val_loader, valid_epoch_interval=1, foldername=foldername)
