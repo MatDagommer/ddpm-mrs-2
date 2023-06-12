@@ -51,11 +51,11 @@ if __name__ == "__main__":
     parser.add_argument('--datapath', default="/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/", \
                         help="data path.")
     parser.add_argument('--epochs', type=int, default=400, help="number of epochs.")
-    parser.add_argument('--model', type=str, default="ddpm", help="Model to be used for training. Default: ddpm. Other options: cnn")
+    parser.add_argument('--model', type=str, default="ddpm", help="Model to be used for training. Default: ddpm. Other options: dnresunet")
     args = parser.parse_args()
     print(args)
 
-    if args.model == "dnresunet":
+    if args.model == "cnn":
         args.config = "dnresunet.yaml"
     
     path = "config/" + args.config
