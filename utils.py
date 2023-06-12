@@ -97,12 +97,16 @@ def compute_metrics(clean, noisy):
     ssim = skimage.metrics.structural_similarity(clean.flatten(), noisy.flatten(), data_range=data_range)
     return psnr, ssim, pcc, scc
 
-def lse_adjust(recon_batch, noisy_batch):
+def lse_adjust(recon_batch, noisy_batch, amplitude=False):
     recon_batch_adjusted = np.zeros_like(recon_batch)
     for i in range(recon_batch.shape[0]):
-        X = np.vstack((np.ones_like(recon_batch[i, 0]), recon_batch[i, 0])).T
-        beta, alpha = np.linalg.pinv(X) @ noisy_batch[i, 0].T
-        recon_batch_adjusted[i, 0] = alpha * recon_batch[i, 0] + beta
+        if amplitude:
+            X = np.vstack((np.ones_like(recon_batch[i:i+1]), recon_batch[i:i+1])).T
+            beta, alpha = np.linalg.pinv(X) @ noisy_batch[i:i+1].T
+            recon_batch_adjusted[i:i+1] = alpha * recon_batch[i:i+1] + beta
+        else:
+            beta = np.mean(noisy_batch[i:i+1] - recon_batch[i:i+1])
+            recon_batch_adjusted[i:i+1] = recon_batch + beta
     return recon_batch_adjusted
 
 def evaluate(model, test_loader, shots, device, lse=False, foldername=""):
