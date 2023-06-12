@@ -45,7 +45,7 @@ class DnResUNet(nn.Module):
         # ]
 
         # self.seq = [fn.to(device) for fn in seq]
-        
+
         self.outputL = OutConv(32, n_out).to(device)
         
     def forward(self, x):
@@ -62,6 +62,8 @@ class DnResUNet(nn.Module):
         x = self.up3(x, x3)
         x = self.up4(x, x2)
         x = self.up5(x, x1)
+
+        x = self.outputL(x)
         
         return x
     
