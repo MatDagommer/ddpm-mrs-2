@@ -2,6 +2,7 @@ import os
 import numpy as np
 import torch
 from tqdm import tqdm
+import pickle
 from scipy.io import savemat, loadmat
 from scipy.fft import fft, fftshift
 from sklearn.model_selection import train_test_split
@@ -65,6 +66,12 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=2):
     print("Separating train / val / test sets...")
     train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.2)
     val_idx, test_idx = train_test_split(val_idx, test_size=0.5)
+
+    with open("val_idx", "wb") as file:
+        pickle.dump(val_idx, file)
+
+    with open("test_idx", "wb") as file:
+        pickle.dump(test_idx, file)
 
     noisy_batch_train = SpectraOFF[:, :, train_idx]
     clean_batch_train = SpectraOFF_avg[:, train_idx]

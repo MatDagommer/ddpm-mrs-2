@@ -123,17 +123,11 @@ def lse_adjust(recon_batch, noisy_batch, amplitude=False):
             recon_batch_adjusted[i:i+1] = alpha * recon_batch[i:i+1] + beta
         else:
             beta = np.mean(noisy_batch[i:i+1] - recon_batch[i:i+1])
-            recon_batch_adjusted[i:i+1] = recon_batch + beta
+            recon_batch_adjusted[i:i+1] = recon_batch[i:i+1] + beta
     return recon_batch_adjusted
 
 def evaluate(model, test_loader, shots, device, lse=False, foldername=""):
-    # ssd_total = 0
-    # mad_total = 0
-    # prd_total = 0
-    # cos_sim_total = 0
-    # snr_noise = 0
-    # snr_recon = 0
-    # snr_improvement = 0
+
     psnr_total = 0
     ssim_total = 0
     pcc_total = 0
@@ -155,10 +149,17 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername=""):
             if shots > 1:
                 output = 0
                 for i in range(shots):
-                    output+=model.denoising(noisy_batch)
+                    if type(model) == DDPM:
+                        output+=model.denoising(noisy_batch)
+                    elif type(model) == DnResUNet:
+                        model.eval()
+                        output+=model(noisy_batch)
                 output /= shots
             else:
-                output = model.denoising(noisy_batch) #B,1,L
+                if type(model) == DDPM:
+                    output = model.denoising(noisy_batch) #B,1,L
+                elif type(model) == DnResUNet:
+                    output = model(noisy_batch)
             clean_batch = clean_batch.permute(0, 2, 1)
             noisy_batch = noisy_batch.permute(0, 2, 1)
             output = output.permute(0, 2, 1) #B,L,1
@@ -182,25 +183,10 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername=""):
             pcc_model_total += pcc_model
             scc_model_total += scc_model
 
-            # ssd_total += np.sum(metrics.SSD(clean_numpy, out_numpy))
-            # mad_total += np.sum(metrics.MAD(clean_numpy, out_numpy))
-            # prd_total += np.sum(metrics.PRD(clean_numpy, out_numpy))
-            # cos_sim_total += np.sum(metrics.COS_SIM(clean_numpy, out_numpy))
-            # snr_noise += np.sum(metrics.SNR(clean_numpy, noisy_numpy))
-            # snr_recon += np.sum(metrics.SNR(clean_numpy, out_numpy))
-            # snr_improvement += np.sum(metrics.SNR_improvement(noisy_numpy, out_numpy, clean_numpy))
-            
             restored_sig.append(out_numpy)
             
             it.set_postfix(
                 ordered_dict={
-                    # "ssd_total": ssd_total/eval_points,
-                    # "mad_total": mad_total/eval_points,
-                    # "prd_total": prd_total/eval_points,
-                    # "cos_sim_total": cos_sim_total/eval_points,
-                    # "snr_in": snr_noise/eval_points,
-                    # "snr_out": snr_recon/eval_points,
-                    # "snr_improve": snr_improvement/eval_points,
                     "psnr": psnr_total/eval_points,
                     "ssim": ssim_total/eval_points,
                     "pcc": pcc_total/eval_points,
@@ -214,16 +200,6 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername=""):
             )
     
     restored_sig = np.concatenate(restored_sig)
-    
-    #np.save(foldername + '/denoised.npy', restored_sig)
-    
-    # print("ssd_total: ",ssd_total/eval_points)
-    # print("mad_total: ", mad_total/eval_points,)
-    # print("prd_total: ", prd_total/eval_points,)
-    # print("cos_sim_total: ", cos_sim_total/eval_points,)
-    # print("snr_in: ", snr_noise/eval_points,)
-    # print("snr_out: ", snr_recon/eval_points,)
-    # print("snr_improve: ", snr_improvement/eval_points,)
 
     print("psnr_total: ", psnr_total/eval_points)
     print("ssim_total: ", ssim_total/eval_points)
