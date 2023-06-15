@@ -236,9 +236,9 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername="", filena
     
     # list_metric = [i / eval_points for i in list_metric]
 
-    with open(filename, "wb") as file:
+    with open(foldername + "/" + filename, "wb") as file:
         pickle.dump(metrics, file)
-        
+
     list_metric = metrics_avg.values()
 
     return list_metric

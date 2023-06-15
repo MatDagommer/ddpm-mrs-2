@@ -147,11 +147,11 @@ if __name__ == "__main__":
     # evaluation at best epoch
     # validation
     print('evaluation of model at best epoch (validation set)')
-    evaluate(model, val_loader, 1, args.device, foldername=foldername)
+    evaluate(model, val_loader, 1, args.device, foldername=foldername, filename="val_metrics")
     
     #test
     print('evaluation of model at best epoch (test set)')
-    evaluate(model, test_loader, 1, args.device, foldername=foldername)
+    evaluate(model, test_loader, 1, args.device, foldername=foldername, filename="test_metrics")
     
     print("Training completed.")
     
