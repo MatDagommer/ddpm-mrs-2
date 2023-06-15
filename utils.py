@@ -105,6 +105,8 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
    
 
 def compute_metrics(clean, noisy):
+    clean = clean[:, 0:1] # considering real channel only
+    noisy = noisy[:, 0:1] 
     data_range = np.max(np.concatenate((clean.flatten(), noisy.flatten())))
     pcc = scipy.stats.pearsonr(clean.flatten(), noisy.flatten())
     pcc = pcc.statistic
