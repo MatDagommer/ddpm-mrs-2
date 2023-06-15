@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset, D
 # Data Preparation
 # Prepare train / val / test sets (subject separation)
 
-def Data_Preparation(data_path, acceleration_factor, N_channels=2):
+def Data_Preparation(data_path, acceleration_factor, N_channels=1, fid=False):
 
     np.random.seed(1234)
 
@@ -27,22 +27,26 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=2):
         for j in range(SpectraOFF.shape[2]):
             SpectraOFF[:, i, j] = fftshift(fft(FidsOFF[:, i, j]))
 
-    SpectraOFF_amp = np.abs(SpectraOFF)
-
-    # Retrieve a maximum amplitude for each subject
-    MAX_VAL = np.max(SpectraOFF_amp, axis=1)
-    MAX_VAL = np.max(MAX_VAL, axis=0)
+    if not fid:
+        SpectraOFF_amp = np.abs(SpectraOFF)
+        MAX_VAL = np.max(SpectraOFF_amp, axis=1)
+        MAX_VAL = np.max(MAX_VAL, axis=0)
+    else:
+        FidsOFF_amp = np.abs(FidsOFF)
+        MAX_VAL = np.max(FidsOFF_amp, axis=1)
+        MAX_VAL = np.max(MAX_VAL, axis=0)
 
     repeat_ = np.repeat(np.expand_dims(MAX_VAL, axis=-1), SpectraOFF.shape[0], axis=-1)
     repeat_ = np.repeat(np.expand_dims(repeat_, axis=-1), SpectraOFF.shape[1], axis=-1)
     repeat_ = np.transpose(repeat_, (1, 2, 0))
 
     SpectraOFF_ = np.copy(SpectraOFF)
-    SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
     SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF_, axis=1), axis=-1) #[length x #subjects]
-    
-    # SpectraOFF = SpectraOFF[1000:1512]
-    # SpectraOFF_avg = SpectraOFF_avg[1000:1512]
+
+    if not fid:
+        SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
+    else:
+        SpectraOFF = np.expand_dims(np.divide(FidsOFF, repeat_), axis=-1)
 
 
     # IMPLEMENT SECOND CHANNEL HERE
@@ -67,11 +71,6 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=2):
     train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.2)
     val_idx, test_idx = train_test_split(val_idx, test_size=0.5)
 
-    with open("val_idx", "wb") as file:
-        pickle.dump(val_idx, file)
-
-    with open("test_idx", "wb") as file:
-        pickle.dump(test_idx, file)
 
     noisy_batch_train = SpectraOFF[:, :, train_idx]
     clean_batch_train = SpectraOFF_avg[:, train_idx]
@@ -130,7 +129,10 @@ class DynamicDataset(Dataset):
     def __getitem__(self, index):
 
         subject_idx = np.random.randint(0, self.N_subjects)
-        sample_ids = np.random.randint(0, self.N_acq, self.N_acq // self.acceleration_factor)
+        if self.acceleration_factor == 0:
+            sample_ids = np.random.randint(0, self.N_acq, self.N_acq // np.random.uniform(5, 33))
+        else:
+            sample_ids = np.random.randint(0, self.N_acq, self.N_acq // self.acceleration_factor)
         np.random.shuffle(sample_ids)
         noisy_batch = torch.mean(self.noisy_batch_train[:, sample_ids, subject_idx], axis=1)
         clean_batch = self.clean_batch_train[:, subject_idx]
@@ -150,7 +152,11 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, acceleration_factor, 
 
     for i in tqdm(range(N_subjects), leave=False):
         for j in range(N_samples_per_subject):
-            sample_idx = np.random.randint(0, N_acq, N_acq // acceleration_factor)
+            if acceleration_factor == 0:
+                nb_samples = N_acq // np.random.uniform(5, 33)
+            else:
+                nb_samples = N_acq // acceleration_factor
+            sample_idx = np.random.randint(0, N_acq, nb_samples)
             np.random.shuffle(sample_idx)
             noisy_batch[i, j, :, :] = np.mean(SpectraOFF[:, sample_idx, i, :], axis=1)
             clean_batch[i, j, :, :] = SpectraOFF_avg[:, i, :]
