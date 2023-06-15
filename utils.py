@@ -174,9 +174,6 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername="", filena
                 metrics[metric_names[i]] += out[i]
 
             restored_sig.append(out_numpy)
-            print("LENGTH OF OUTPUT: ", len(out))
-            print("LENGTH OF ELEMENTS OF OUTPUT: ", len(out[0]))
-            print("LENGTH OF METRICS: ", len(metrics["psnr"]))
 
             avg_values = list(map(lambda x: np.mean(x), metrics.values()))
             metrics_avg = dict(zip(metrics.keys(), avg_values))
@@ -195,8 +192,6 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername="", filena
         pickle.dump(metrics, file)
 
     list_metric = metrics_avg.values()
-
-    print("Number of data points: ", len(metrics["psnr"]))
 
     return list_metric
     
