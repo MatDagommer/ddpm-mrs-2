@@ -126,8 +126,8 @@ if __name__ == "__main__":
     # val_loader = DataLoader(val_set, batch_size=config['train']['batch_size'], drop_last=True, num_workers=0)
     # test_loader = DataLoader(test_set, batch_size=50, num_workers=0)
 
-    val_loader = DataLoader(val_set, batch_size=1, num_workers=0)
-    test_loader = DataLoader(test_set, batch_size=1, num_workers=0)
+    val_loader = DataLoader(val_set, batch_size=config['train']['batch_size'], num_workers=0)
+    test_loader = DataLoader(test_set, batch_size=config['train']['batch_size'], num_workers=0)
     
     if args.model == "ddpm":
         #base_model = ConditionalModel(64,8,4).to(args.device)
