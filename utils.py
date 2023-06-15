@@ -171,7 +171,7 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername="", filena
             out = out_noisy + out_model
             
             for i in range(len(metrics)):
-                metrics[metric_names[i]].append(out[i])
+                metrics[metric_names[i]] += out[i]
 
             restored_sig.append(out_numpy)
             print("LENGTH OF OUTPUT: ", len(out))
