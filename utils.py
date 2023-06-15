@@ -105,8 +105,8 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
    
 
 def compute_metrics(clean, noisy):
-    clean = clean[:, 0:1] # considering real channel only
-    noisy = noisy[:, 0:1] 
+    clean = clean[..., 0:1] # considering real channel only
+    noisy = noisy[..., 0:1] 
     data_range = np.max(np.concatenate((clean.flatten(), noisy.flatten())))
     pcc = scipy.stats.pearsonr(clean.flatten(), noisy.flatten())
     pcc = pcc.statistic
@@ -128,18 +128,24 @@ def lse_adjust(recon_batch, noisy_batch, amplitude=False):
             recon_batch_adjusted[i:i+1] = recon_batch[i:i+1] + beta
     return recon_batch_adjusted
 
-def evaluate(model, test_loader, shots, device, lse=False, foldername=""):
+def evaluate(model, test_loader, shots, device, lse=False, foldername="", filename=""):
 
-    psnr_total = 0
-    ssim_total = 0
-    pcc_total = 0
-    scc_total = 0
-    eval_points = 0
+    metric_names = ["psnr", "ssim", "pcc", "scc"]
+    metric_names = metric_names + [m + "_model" for m in metric_names]
+    values = [[] for i in range(len(metric_names))]
+    metrics = dict(zip(metric_names, values))
 
-    psnr_model_total = 0
-    ssim_model_total = 0
-    pcc_model_total = 0
-    scc_model_total = 0
+
+    # psnr_total = 0
+    # ssim_total = 0
+    # pcc_total = 0
+    # scc_total = 0
+    # eval_points = 0
+
+    # psnr_model_total = 0
+    # ssim_model_total = 0
+    # pcc_model_total = 0
+    # scc_model_total = 0
 
     eval_points = 0
     
@@ -173,48 +179,67 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername=""):
                 out_numpy = lse_adjust(out_numpy, noisy_numpy)
 
             eval_points += 1 # len(output)
-            psnr, ssim, pcc, scc = compute_metrics(clean_numpy, noisy_numpy)
-            psnr_total += psnr
-            ssim_total += ssim
-            pcc_total += pcc
-            scc_total += scc
+            out_noisy = compute_metrics(clean_numpy, noisy_numpy)
+            out_model = compute_metrics(clean_numpy, out_numpy)
+            out = out_noisy + out_model
+            
+            for i in range(len(metrics)):
+                metrics[metric_names[i]].append(out[i])
 
-            psnr_model, ssim_model, pcc_model, scc_model = compute_metrics(clean_numpy, out_numpy)
-            psnr_model_total += psnr_model
-            ssim_model_total += ssim_model
-            pcc_model_total += pcc_model
-            scc_model_total += scc_model
+            # psnr_total += psnr
+            # ssim_total += ssim
+            # pcc_total += pcc
+            # scc_total += scc
+
+            # psnr_model, ssim_model, pcc_model, scc_model = compute_metrics(clean_numpy, out_numpy)
+            # psnr_model_total += psnr_model
+            # ssim_model_total += ssim_model
+            # pcc_model_total += pcc_model
+            # scc_model_total += scc_model
 
             restored_sig.append(out_numpy)
-            
+
+            avg_values = list(map(lambda x: np.mean(x), metrics.values()))
+            metrics_avg = dict(zip(metrics.keys(), avg_values))
+
             it.set_postfix(
-                ordered_dict={
-                    "psnr": psnr_total/eval_points,
-                    "ssim": ssim_total/eval_points,
-                    "pcc": pcc_total/eval_points,
-                    "scc": scc_total/eval_points,
-                    "psnr_model": psnr_model_total/eval_points,
-                    "ssim_model": ssim_model_total/eval_points,
-                    "pcc_model": pcc_model_total/eval_points,
-                    "scc_model": scc_model_total/eval_points
-                },
+                ordered_dict=metrics_avg,
+                # {
+                #     "psnr": psnr_total/eval_points,
+                #     "ssim": ssim_total/eval_points,
+                #     "pcc": pcc_total/eval_points,
+                #     "scc": scc_total/eval_points,
+                #     "psnr_model": psnr_model_total/eval_points,
+                #     "ssim_model": ssim_model_total/eval_points,
+                #     "pcc_model": pcc_model_total/eval_points,
+                #     "scc_model": scc_model_total/eval_points
+                # },
                 refresh=True,
             )
     
     restored_sig = np.concatenate(restored_sig)
 
-    print("psnr_total: ", psnr_total/eval_points)
-    print("ssim_total: ", ssim_total/eval_points)
-    print("pcc_total: ", pcc_total/eval_points)
-    print("scc_total: ", scc_total/eval_points)
-    print("psnr_model_total: ", psnr_model_total/eval_points)
-    print("ssim_model_total: ", ssim_model_total/eval_points)
-    print("pcc_model_total: ", pcc_model_total/eval_points)
-    print("scc_model_total: ", scc_model_total/eval_points)
+    for name, value in metrics_avg.items():
+        print(name + ": ", value)
 
-    list_metric = [psnr_total, ssim_total, pcc_total, scc_total, psnr_model_total, ssim_model_total, \
-                   pcc_model_total, scc_model_total]
-    list_metric = [i / eval_points for i in list_metric]
+    # print("psnr_total: ", psnr_total/eval_points)
+    # print("ssim_total: ", ssim_total/eval_points)
+    # print("pcc_total: ", pcc_total/eval_points)
+    # print("scc_total: ", scc_total/eval_points)
+    # print("psnr_model_total: ", psnr_model_total/eval_points)
+    # print("ssim_model_total: ", ssim_model_total/eval_points)
+    # print("pcc_model_total: ", pcc_model_total/eval_points)
+    # print("scc_model_total: ", scc_model_total/eval_points)
+
+    # list_metric = [psnr_total, ssim_total, pcc_total, scc_total, psnr_model_total, ssim_model_total, \
+    #                pcc_model_total, scc_model_total]
+    
+    # list_metric = [i / eval_points for i in list_metric]
+
+    with open(filename, "wb") as file:
+        pickle.dump(metrics, file)
+        
+    list_metric = metrics_avg.values()
 
     return list_metric
     
