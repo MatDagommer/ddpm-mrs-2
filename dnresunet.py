@@ -79,7 +79,7 @@ class ResBlock(nn.Module):
             nn.Conv1d(out_channels, out_channels, kernel_size=KERNEL_SIZE, padding=P, padding_mode = 'replicate', dilation=dilation)
         )
         self.block2 = nn.Sequential(
-          ConvBlock(in_channels, out_channels)
+          ConvBlock(in_channels, out_channels, dilation)
         )
 
     def forward(self, x):
