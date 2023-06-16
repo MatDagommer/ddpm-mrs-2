@@ -45,14 +45,18 @@ if __name__ == "__main__":
     parser.add_argument('--device', default='cuda:0', help='Device')
     # parser.add_argument('--n_type', type=int, default=1, help='noise version')
     parser.add_argument('--name', default='test', help='model name.')
-    parser.add_argument('--af', type=int, default=10, help='acceleration factor. If 0, takes random samples with continuous af between 8 and 32.')
+    parser.add_argument('--af', type=int, default=10, help='acceleration factor. \
+                        If 0, takes random samples with continuous af between 8 and 32.')
     parser.add_argument('--channels', type=int, default=1, help="number of channels. \
                         1: real part only. 2: real + imaginary parts.")
     parser.add_argument('--datapath', default="/media/sail/Elements/JET_CNN/DL-DPM-Denoising/ddpm-mrs-2/data/", \
                         help="data path.")
     parser.add_argument('--epochs', type=int, default=400, help="number of epochs.")
-    parser.add_argument('--model', type=str, default="ddpm", help="Model to be used for training. Default: ddpm. Other options: dnresunet")
+    parser.add_argument('--model', type=str, default="ddpm", help="Model to be used for training. \
+                        Default: ddpm. Other options: dnresunet")
     parser.add_argument('--fid', action='store_true', default=False, help='Use FID as an input.')
+    parser.add_argument('--dilation', type=int, default=1, help="dilation to use for convolutions \
+                        (CNN).")
     args = parser.parse_args()
     print(args)
 
@@ -138,7 +142,7 @@ if __name__ == "__main__":
         base_model = ConditionalModel(config['train']['feats'], args.channels).to(args.device)
         model = DDPM(base_model, config, args.device)
     elif args.model == "cnn":
-        model = DnResUNet('dnresunet_model', 2, 2, args.device)
+        model = DnResUNet('dnresunet_model', 2, 2, args.device, args.dilation)
     
     train(model, config['train'], train_loader, args.device, 
           valid_loader=val_loader, valid_epoch_interval=1, foldername=foldername)

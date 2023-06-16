@@ -10,43 +10,27 @@ P = (KERNEL_SIZE - 1)//2
 
 class DnResUNet(nn.Module):
 
-    def __init__(self, name, n_channels, n_out, device):
+    def __init__(self, name, n_channels, n_out, device, dilation):
         super(DnResUNet, self).__init__()
         self.name = name
         self.n_channels = n_channels
         self.n_out = n_out
 
-        self.inputL = ConvBlock(n_channels, 32).to(device)
-        self.down1 = Down(32, 64).to(device)
-        self.down2 = Down(64, 128).to(device)
-        self.down3 = Down(128, 256).to(device)
-        self.down4 = Down(256, 512).to(device)
-        self.down5 = Down(512, 1024).to(device)
-        self.conv = ConvBlock(1024, 1024).to(device)
-        self.up1 = Up(1024, 512).to(device)
-        self.up2 = Up(512, 256).to(device)
-        self.up3 = Up(256, 128).to(device)
-        self.up4 = Up(128, 64).to(device)
-        self.up5 = Up(64, 32).to(device)
+        self.inputL = ConvBlock(n_channels, 32, dilation).to(device)
+        self.down1 = Down(32, 64, dilation).to(device)
+        self.down2 = Down(64, 128, dilation).to(device)
+        self.down3 = Down(128, 256, dilation).to(device)
+        self.down4 = Down(256, 512, dilation).to(device)
+        self.down5 = Down(512, 1024, dilation).to(device)
+        self.conv = ConvBlock(1024, 1024, dilation).to(device)
+        self.up1 = Up(1024, 512, dilation).to(device)
+        self.up2 = Up(512, 256, dilation).to(device)
+        self.up3 = Up(256, 128, dilation).to(device)
+        self.up4 = Up(128, 64, dilation).to(device)
+        self.up5 = Up(64, 32, dilation).to(device)
 
-        # seq = [
-        #     ConvBlock(n_channels, 32),
-        #     Down(32, 64),
-        #     Down(64, 128),
-        #     Down(128, 256),
-        #     Down(256, 512),
-        #     Down(512, 1024),
-        #     ConvBlock(1024, 1024),
-        #     Up(1024, 512),
-        #     Up(512, 256),
-        #     Up(256, 128),
-        #     Up(128, 64),
-        #     Up(64, 32),
-        # ]
 
-        # self.seq = [fn.to(device) for fn in seq]
-
-        self.outputL = OutConv(32, n_out).to(device)
+        self.outputL = OutConv(32, n_out, dilation).to(device)
         
     def forward(self, x):
 
@@ -70,10 +54,10 @@ class DnResUNet(nn.Module):
 
 class ConvBlock(nn.Module):
     """(convolution => [BN] => ReLU)"""
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, dilation):
         super().__init__()
         self.convblock = nn.Sequential(
-            nn.Conv1d(in_channels, out_channels, kernel_size=KERNEL_SIZE, padding=P, padding_mode = 'replicate'),
+            nn.Conv1d(in_channels, out_channels, kernel_size=KERNEL_SIZE, padding=P, padding_mode = 'replicate', dilation=dilation),
             nn.BatchNorm1d(out_channels),
             nn.ReLU(inplace=True)
         )
@@ -84,15 +68,15 @@ class ConvBlock(nn.Module):
 
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, dilation):
         super().__init__()
         self.block1 = nn.Sequential(
             nn.BatchNorm1d(in_channels),
             nn.ReLU(inplace=True),
-            nn.Conv1d(in_channels, out_channels, kernel_size=KERNEL_SIZE, padding=P, padding_mode = 'replicate'),
+            nn.Conv1d(in_channels, out_channels, kernel_size=KERNEL_SIZE, padding=P, padding_mode = 'replicate', dilation=dilation),
             nn.BatchNorm1d(out_channels),
             nn.ReLU(inplace=True),
-            nn.Conv1d(out_channels, out_channels, kernel_size=KERNEL_SIZE, padding=P, padding_mode = 'replicate')
+            nn.Conv1d(out_channels, out_channels, kernel_size=KERNEL_SIZE, padding=P, padding_mode = 'replicate', dilation=dilation)
         )
         self.block2 = nn.Sequential(
           ConvBlock(in_channels, out_channels)
@@ -102,11 +86,11 @@ class ResBlock(nn.Module):
         return self.block1(x) + self.block2(x)
 
 class Up(nn.Module):
-  def __init__(self, in_channels, out_channels):
+  def __init__(self, in_channels, out_channels, dilation):
      super().__init__()
      self.up = nn.Sequential(
          nn.Upsample(scale_factor=2, mode='linear', align_corners=True),
-         nn.Conv1d(in_channels, out_channels, kernel_size=1, padding=0)
+         nn.Conv1d(in_channels, out_channels, kernel_size=1, padding=0, dilation=dilation)
      )
      self.conv = ResBlock(out_channels * 2, out_channels)
 
@@ -126,10 +110,10 @@ class Down(nn.Module):
         return self.maxpool_conv(x)
 
 class OutConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, dilation):
         super(OutConv, self).__init__()
         self.conv_tanh = nn.Sequential(
-            nn.Conv1d(in_channels, out_channels, kernel_size=1),
+            nn.Conv1d(in_channels, out_channels, kernel_size=1, dilation=dilation),
             nn.BatchNorm1d(out_channels),
             nn.Tanh()
         )
