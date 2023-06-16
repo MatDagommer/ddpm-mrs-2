@@ -92,7 +92,7 @@ class Up(nn.Module):
          nn.Upsample(scale_factor=2, mode='linear', align_corners=True),
          nn.Conv1d(in_channels, out_channels, kernel_size=1, padding=0, dilation=dilation)
      )
-     self.conv = ResBlock(out_channels * 2, out_channels)
+     self.conv = ResBlock(out_channels * 2, out_channels, dilation)
 
   def forward(self, x1, x2):
       x1 = self.up(x1)
