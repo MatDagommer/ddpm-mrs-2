@@ -100,11 +100,11 @@ class Up(nn.Module):
       return self.conv(x)
 
 class Down(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, dilation):
         super().__init__()
         self.maxpool_conv = nn.Sequential(
             nn.MaxPool1d(2),
-            ResBlock(in_channels, out_channels)
+            ResBlock(in_channels, out_channels, dilation)
         )
     def forward(self, x):
         return self.maxpool_conv(x)
