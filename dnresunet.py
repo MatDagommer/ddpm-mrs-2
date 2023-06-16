@@ -53,7 +53,7 @@ class ConvBlock(nn.Module):
     """(convolution => [BN] => ReLU)"""
     def __init__(self, in_channels, out_channels, dilation):
         super().__init__()
-        KERNEL_SIZE = 3 + 2*dilation
+        KERNEL_SIZE = 3 + 2*(dilation-1)
         P = (KERNEL_SIZE - 1)//2
         self.convblock = nn.Sequential(
             nn.Conv1d(in_channels, out_channels, kernel_size=KERNEL_SIZE, padding=P, padding_mode = 'replicate', dilation=dilation),
@@ -69,7 +69,7 @@ class ConvBlock(nn.Module):
 class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, dilation):
         super().__init__()
-        KERNEL_SIZE = 3 + 2*dilation
+        KERNEL_SIZE = 3 + 2*(dilation-1)
         P = (KERNEL_SIZE - 1)//2
         self.block1 = nn.Sequential(
             nn.BatchNorm1d(in_channels),
