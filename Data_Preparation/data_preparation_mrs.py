@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset, D
 # Data Preparation
 # Prepare train / val / test sets (subject separation)
 
-def Data_Preparation(data_path, acceleration_factor, N_channels=1, fid=False):
+def Data_Preparation(data_path, acceleration_factor, N_channels=1, fid=False, cplx=False):
 
     np.random.seed(1234)
 
@@ -50,6 +50,9 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, fid=False):
 
 
     # IMPLEMENT SECOND CHANNEL HERE
+    if cplx:
+        N_channels = 2
+
     if N_channels == 1:
         SpectraOFF = np.real(SpectraOFF)
         SpectraOFF_avg = np.real(SpectraOFF_avg)
@@ -61,16 +64,16 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, fid=False):
     # SpectraOFF: [length, N_acq, N_subj, N_channels]
     # SpectraOFF_avg: [length, N_subj, N_channels]
 
+    print("CPLX: ", cplx)
+    print("SpectraOFF dtype: ", SpectraOFF.dtype)
     print("SpectraOFF shape: ", SpectraOFF.shape)
     print("SpectraOFF_avg shape: ", SpectraOFF_avg.shape)
-
 
     _, _, N_subjects, _ = SpectraOFF.shape
 
     print("Separating train / val / test sets...")
     train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.2)
     val_idx, test_idx = train_test_split(val_idx, test_size=0.5)
-
 
     noisy_batch_train = SpectraOFF[:, :, train_idx]
     clean_batch_train = SpectraOFF_avg[:, train_idx]
@@ -83,20 +86,41 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, fid=False):
     print("Starting validation dataset generation...")
     clean_batch_test, noisy_batch_test  = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, test_idx, acceleration_factor)
 
+    print("clean_batch_val shape: ", clean_batch_val.shape)
+
     print("Converting data to tensors...")
+
+    print("noisy_batch_train dtype: ", noisy_batch_train.dtype)
+    print("noisy_batch_train dtype: ", noisy_batch_train.dtype)
 
     noisy_batch_train = torch.FloatTensor(noisy_batch_train)
     clean_batch_train = torch.FloatTensor(clean_batch_train)
-
-    clean_batch_val = torch.FloatTensor(clean_batch_val)
-    clean_batch_val = clean_batch_val.permute(0, 2, 1)
     noisy_batch_val = torch.FloatTensor(noisy_batch_val)
-    noisy_batch_val = noisy_batch_val.permute(0, 2, 1)
-
-    clean_batch_test = torch.FloatTensor(clean_batch_test)
-    clean_batch_test = clean_batch_test.permute(0, 2, 1)
+    clean_batch_val = torch.FloatTensor(clean_batch_val)
     noisy_batch_test = torch.FloatTensor(noisy_batch_test)
+    clean_batch_test = torch.FloatTensor(clean_batch_test)
+    
+    if cplx:
+        noisy_batch_train = torch.view_as_complex(noisy_batch_train)
+        noisy_batch_train = torch.unsqueeze(noisy_batch_train, dim=-1)
+        clean_batch_train = torch.view_as_complex(clean_batch_train)
+        clean_batch_train = torch.unsqueeze(clean_batch_train, dim=-1)
+
+        noisy_batch_val = torch.view_as_complex(noisy_batch_val)
+        noisy_batch_val = torch.unsqueeze(noisy_batch_val, dim=-1)
+        clean_batch_val = torch.view_as_complex(clean_batch_val)
+        clean_batch_val = torch.unsqueeze(clean_batch_val, dim=-1)
+
+        noisy_batch_test = torch.view_as_complex(noisy_batch_test)
+        noisy_batch_test = torch.unsqueeze(noisy_batch_test, dim=-1)
+        clean_batch_test = torch.view_as_complex(clean_batch_test)
+        clean_batch_test = torch.unsqueeze(clean_batch_test, dim=-1)
+
+    clean_batch_val = clean_batch_val.permute(0, 2, 1)
+    noisy_batch_val = noisy_batch_val.permute(0, 2, 1)
+    clean_batch_test = clean_batch_test.permute(0, 2, 1)
     noisy_batch_test = noisy_batch_test.permute(0, 2, 1)
+
 
     train_set = DynamicDataset(clean_batch_train, noisy_batch_train, acceleration_factor)
     val_set = TensorDataset(clean_batch_val, noisy_batch_val)

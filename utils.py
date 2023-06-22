@@ -9,6 +9,9 @@ import scipy
 import skimage
 from dnresunet import DnResUNet
 from main_model import DDPM
+from aftnet1d import AFT_RACUNet
+
+loss_fn = torch.nn.L1Loss()
 
 def train(model, config, train_loader, device, valid_loader=None, valid_epoch_interval=1, foldername=""):
     optimizer = Adam(model.parameters(), lr=config["lr"])
@@ -44,12 +47,11 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.model.parameters(), 1.0)
 
-                elif type(model) == DnResUNet:
+                elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                     recon_batch = model(noisy_batch)
-                    loss_fn = torch.nn.L1Loss()
                     loss = loss_fn(recon_batch, clean_batch)
                     loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                    # torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 
                 optimizer.step()
                 avg_loss += loss.item()
@@ -76,9 +78,8 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                         clean_batch, noisy_batch = clean_batch.to(device), noisy_batch.to(device)
                         if type(model) == DDPM:
                             loss = model(clean_batch, noisy_batch)
-                        elif type(model) == DnResUNet:
+                        elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                             recon_batch = model(noisy_batch)
-                            loss_fn = torch.nn.L1Loss()
                             loss = loss_fn(recon_batch, clean_batch)
                         avg_loss_valid += loss.item()
                         it.set_postfix(
@@ -147,14 +148,14 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername="", filena
                 for i in range(shots):
                     if type(model) == DDPM:
                         output+=model.denoising(noisy_batch)
-                    elif type(model) == DnResUNet:
+                    elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                         model.eval()
                         output+=model(noisy_batch)
                 output /= shots
             else:
                 if type(model) == DDPM:
                     output = model.denoising(noisy_batch) #B,1,L
-                elif type(model) == DnResUNet:
+                elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                     output = model(noisy_batch)
             clean_batch = clean_batch.permute(0, 2, 1)
             noisy_batch = noisy_batch.permute(0, 2, 1)
@@ -194,21 +195,3 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername="", filena
     list_metric = metrics_avg.values()
 
     return list_metric
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
