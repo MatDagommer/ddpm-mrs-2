@@ -153,7 +153,7 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, acceleration_factor, 
     for i in tqdm(range(N_subjects), leave=False):
         for j in range(N_samples_per_subject):
             if acceleration_factor == 0:
-                nb_samples = N_acq // np.random.uniform(5, 33)
+                nb_samples = int(N_acq // np.random.uniform(5, 33))
             else:
                 nb_samples = N_acq // acceleration_factor
             sample_idx = np.random.randint(0, N_acq, nb_samples)
