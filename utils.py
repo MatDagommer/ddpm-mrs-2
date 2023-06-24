@@ -105,8 +105,6 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
    
 
 def compute_metrics(clean, noisy):
-    clean = clean[..., 0:1] # considering real channel only
-    noisy = noisy[..., 0:1] 
     psnr, ssim, pcc, scc = [], [], [], []
     for i in range(clean.shape[0]):
         data_range = np.max(np.concatenate((clean[i].flatten(), noisy[i].flatten())))
@@ -165,9 +163,14 @@ def evaluate(model, test_loader, shots, device, lse=False, foldername="", filena
             
             if lse:
                 out_numpy = lse_adjust(out_numpy, noisy_numpy)
+            
+            # keeping only the real part
+            clean_numpy_real = clean_numpy[...,0:1]
+            noisy_numpy_real = noisy_numpy[...,0:1]
+            out_numpy_real = out_numpy[...,0:1]
 
-            out_noisy = compute_metrics(clean_numpy, noisy_numpy)
-            out_model = compute_metrics(clean_numpy, out_numpy)
+            out_noisy = compute_metrics(clean_numpy_real, noisy_numpy_real)
+            out_model = compute_metrics(clean_numpy_real, out_numpy_real)
             out = out_noisy + out_model
             
             for i in range(len(metrics)):
