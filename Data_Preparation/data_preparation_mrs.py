@@ -130,7 +130,7 @@ class DynamicDataset(Dataset):
 
         subject_idx = np.random.randint(0, self.N_subjects)
         if self.acceleration_factor == 0:
-            sample_ids = np.random.randint(0, self.N_acq, self.N_acq // np.random.uniform(5, 33))
+            sample_ids = np.random.randint(0, self.N_acq, int(self.N_acq // np.random.uniform(5, 33)))
         else:
             sample_ids = np.random.randint(0, self.N_acq, self.N_acq // self.acceleration_factor)
         np.random.shuffle(sample_ids)
@@ -156,7 +156,6 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, acceleration_factor, 
                 nb_samples = int(N_acq / np.random.uniform(5, 33))
             else:
                 nb_samples = N_acq // acceleration_factor
-            print(">>>>>>>>> NB_SAMPLES: ", nb_samples)
             sample_idx = np.random.randint(0, N_acq, nb_samples)
             np.random.shuffle(sample_idx)
             noisy_batch[i, j, :, :] = np.mean(SpectraOFF[:, sample_idx, i, :], axis=1)
