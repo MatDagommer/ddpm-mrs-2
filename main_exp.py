@@ -16,6 +16,9 @@ from utils import train, evaluate
 from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset
 from sklearn.model_selection import train_test_split
 from dnresunet import DnResUNet
+from aftnet1d import AFT_RACUNet
+from sys import platform
+
 
 def wait_for_input(timeout):
     # Create a selector object
@@ -53,7 +56,7 @@ if __name__ == "__main__":
                         help="data path.")
     parser.add_argument('--epochs', type=int, default=400, help="number of epochs.")
     parser.add_argument('--model', type=str, default="ddpm", help="Model to be used for training. \
-                        Default: ddpm. Other options: dnresunet")
+                        Default: ddpm. Other options: cnn, aftnet")
     parser.add_argument('--fid', action='store_true', default=False, help='Use FID as an input.')
     parser.add_argument('--dilation', type=int, default=1, help="dilation to use for convolutions \
                         (CNN).")
@@ -67,6 +70,11 @@ if __name__ == "__main__":
     if args.model == "cnn":
         args.config = "dnresunet.yaml"
         args.channels = 2
+
+    cplx = False
+    if args.model == "aftnet":
+        args.config = "aftnet.yaml"
+        cplx = True
     
     path = "config/" + args.config
     with open(path, "r") as f:
@@ -77,14 +85,15 @@ if __name__ == "__main__":
             config['train']['epochs'] = args.epochs 
             print("Set the number of epochs to %d."%args.epochs)    
 
-    #foldername = "./check_points/noise_type_" + str(args.n_type) + "/"
+    if platform == "win32":
+        args.datapath = "C:/Users/matth/Documents/SAIL/data/"
+
     foldername = "./check_points/" + args.name
     if os.path.exists(foldername):
         status = True
         while status:
             answer, timedOut = timedInput("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
             # print("A model named %s already exists. Do you want to erase it (y/n)?"%args.name)
-            # answer = wait_for_input(10)
             if(timedOut):
                 print("Timed out when waiting for input. Erasing model.")
                 answer = "y"
@@ -104,47 +113,26 @@ if __name__ == "__main__":
     print('folder:', foldername)
     os.makedirs(foldername, exist_ok=True)
     data_path = args.datapath
+
+    print("BATCH SIZE: ", config['train']['batch_size'])
     
     acceleration_factor = args.af
     train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor, \
-                    N_channels=args.channels, fid=args.fid, waterRemoval=args.wr)
+                    N_channels=args.channels, fid=args.fid, waterRemoval=args.wr, cplx=cplx)
     print("DATASET TYPE: ",type(train_set))
-    # [X_train, y_train, X_test, y_test] = Data_Preparation(args.n_type)
-    
-    # X_train = torch.FloatTensor(X_train)
-    # X_train = X_train.permute(0,2,1)
-    
-    # y_train = torch.FloatTensor(y_train)
-    # y_train = y_train.permute(0,2,1)
-    
-    # X_test = torch.FloatTensor(X_test)
-    # X_test = X_test.permute(0,2,1)
-    
-    # y_test = torch.FloatTensor(y_test)
-    # y_test = y_test.permute(0,2,1)
-    
-    # train_val_set = TensorDataset(y_train, X_train)
-    # test_set = TensorDataset(y_test, X_test)
-    
-    # train_idx, val_idx = train_test_split(list(range(len(train_val_set))), test_size=0.3)
-    # train_set = Subset(train_val_set, train_idx)
-    # val_set = Subset(train_val_set, val_idx)
     
     train_loader = DataLoader(train_set, batch_size=config['train']['batch_size'],
                               shuffle=True, drop_last=True, num_workers=0)
-    
-    # val_loader = DataLoader(val_set, batch_size=config['train']['batch_size'], drop_last=True, num_workers=0)
-    # test_loader = DataLoader(test_set, batch_size=50, num_workers=0)
-
     val_loader = DataLoader(val_set, batch_size=config['train']['batch_size'], num_workers=0)
     test_loader = DataLoader(test_set, batch_size=config['train']['batch_size'], num_workers=0)
     
     if args.model == "ddpm":
-        #base_model = ConditionalModel(64,8,4).to(args.device)
         base_model = ConditionalModel(config['train']['feats'], args.channels).to(args.device)
         model = DDPM(base_model, config, args.device)
     elif args.model == "cnn":
         model = DnResUNet('dnresunet_model', 2, 2, args.device, args.dilation)
+    elif args.model == "aftnet":
+        model = AFT_RACUNet().to(args.device)
     
     train(model, config['train'], train_loader, args.device, 
           valid_loader=val_loader, valid_epoch_interval=1, foldername=foldername)
