@@ -30,15 +30,20 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
             SpectraOFF[:, i, j] = fftshift(fft(FidsOFF[:, i, j]))
             SpectraON[:, i, j] = fftshift(fft(FidsON[:, i, j]))
 
-    # WATER PEAK REMOVAL
+    # Water Peak Removal
+    
     if waterRemoval:
+        print("Removing water peaks...")
         SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
 
-    if fid: # Recompute FID without water peak
-        for i in range(SpectraOFF.shape[1]):
-            for j in range(SpectraOFF.shape[2]):
-                FidsOFF[:, i, j] = ifft(fftshift(SpectraOFF[:, i, j]))
+        if fid: # Recompute FID without water peak
+            for i in range(SpectraOFF.shape[1]):
+                for j in range(SpectraOFF.shape[2]):
+                    FidsOFF[:, i, j] = ifft(fftshift(SpectraOFF[:, i, j]))
 
+    # Normalizing Spectra + FIDs
+
+    print("Normalizing data...")
     if not fid:
         SpectraOFF_amp = np.abs(SpectraOFF)
         MAX_VAL = np.max(SpectraOFF_amp, axis=1)
@@ -55,14 +60,13 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     SpectraOFF_ = np.copy(SpectraOFF)
     SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF_, axis=1), axis=-1) #[length x #subjects]
 
-
     if not fid:
         SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
     else:
         SpectraOFF = np.expand_dims(np.divide(FidsOFF, repeat_), axis=-1)
 
+    # real part if channel==1, else (real,imag)
 
-    # IMPLEMENT SECOND CHANNEL HERE
     if N_channels == 1:
         SpectraOFF = np.real(SpectraOFF)
         SpectraOFF_avg = np.real(SpectraOFF_avg)
@@ -74,9 +78,8 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     # SpectraOFF: [length, N_acq, N_subj, N_channels]
     # SpectraOFF_avg: [length, N_subj, N_channels]
 
-    print("SpectraOFF shape: ", SpectraOFF.shape)
-    print("SpectraOFF_avg shape: ", SpectraOFF_avg.shape)
-
+    # print("SpectraOFF shape: ", SpectraOFF.shape)
+    # print("SpectraOFF_avg shape: ", SpectraOFF_avg.shape)
 
     _, _, N_subjects, _ = SpectraOFF.shape
 
@@ -87,8 +90,9 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
 
     noisy_batch_train = SpectraOFF[:, :, train_idx]
     clean_batch_train = SpectraOFF_avg[:, train_idx]
-    print("noisy_batch_train shape: ", noisy_batch_train.shape)
-    print("clean_batch_train shape: ", clean_batch_train.shape)
+
+    # print("noisy_batch_train shape: ", noisy_batch_train.shape)
+    # print("clean_batch_train shape: ", clean_batch_train.shape)
 
     print("Starting validation dataset generation...")
     # OUTPUT [#samples x length x N_channels]
@@ -115,12 +119,14 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     val_set = TensorDataset(clean_batch_val, noisy_batch_val)
     test_set = TensorDataset(clean_batch_test, noisy_batch_test)
 
+    print("Saving datasets...")
+
     torch.save(train_set, os.path.join(data_path, "train_set.pt"))
     torch.save(val_set, os.path.join(data_path, "val_set.pt"))
     torch.save(test_set, os.path.join(data_path, "test_set.pt"))
 
     print("Done.")
-    print("Dataset ready.")
+    print("Datasets ready.")
 
     return train_set, val_set, test_set
 
