@@ -70,6 +70,7 @@ if __name__ == "__main__":
         args.config = "dnresunet.yaml"
         args.channels = 2
 
+    cplx = False
     if args.model == "aftnet":
         args.config = "aftnet.yaml"
         cplx = True
