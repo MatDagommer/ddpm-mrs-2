@@ -4,7 +4,7 @@ import torch
 from tqdm import tqdm
 import pickle
 from scipy.io import savemat, loadmat
-from scipy.fft import fft, fftshift
+from scipy.fft import fft, ifft, fftshift
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset, Dataset
@@ -13,19 +13,31 @@ from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset, D
 # Data Preparation
 # Prepare train / val / test sets (subject separation)
 
-def Data_Preparation(data_path, acceleration_factor, N_channels=1, fid=False):
+def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=False, fid=False):
 
     np.random.seed(1234)
 
     print("Loading raw data...")
     PH_invivoData = loadmat(os.path.join(data_path, "PH_InVivoData.mat"))
     FidsOFF = PH_invivoData['OFFdata']
+    FidsON = PH_invivoData['ONdata']
 
     SpectraOFF = np.zeros_like(FidsOFF)
- 
+    SpectraON = np.zeros_like(FidsON)
+
     for i in range(SpectraOFF.shape[1]):
         for j in range(SpectraOFF.shape[2]):
             SpectraOFF[:, i, j] = fftshift(fft(FidsOFF[:, i, j]))
+            SpectraON[:, i, j] = fftshift(fft(FidsON[:, i, j]))
+
+    # WATER PEAK REMOVAL
+    if waterRemoval:
+        SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
+
+    if fid: # Recompute FID without water peak
+        for i in range(SpectraOFF.shape[1]):
+            for j in range(SpectraOFF.shape[2]):
+                FidsOFF[:, i, j] = ifft(fftshift(SpectraOFF[:, i, j]))
 
     if not fid:
         SpectraOFF_amp = np.abs(SpectraOFF)
@@ -42,6 +54,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, fid=False):
 
     SpectraOFF_ = np.copy(SpectraOFF)
     SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF_, axis=1), axis=-1) #[length x #subjects]
+
 
     if not fid:
         SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
