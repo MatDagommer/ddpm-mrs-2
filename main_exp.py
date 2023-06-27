@@ -64,9 +64,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    if args.fid == True:
-        args.channels = 2
-
     if args.model == "cnn":
         args.config = "dnresunet.yaml"
         args.channels = 2
@@ -74,6 +71,7 @@ if __name__ == "__main__":
     cplx = False
     if args.model == "aftnet":
         args.config = "aftnet.yaml"
+        args.fid = True # Always using FID as input with AFT-Net
         cplx = True
     
     path = "config/" + args.config
@@ -84,6 +82,9 @@ if __name__ == "__main__":
         if config['train']['epochs'] != args.epochs:
             config['train']['epochs'] = args.epochs 
             print("Set the number of epochs to %d."%args.epochs)    
+        
+    if args.fid == True: # when in=FID and out=Spectra ==> need both real/imag parts
+        args.channels = 2
 
     if platform == "win32":
         args.datapath = "C:/Users/matth/Documents/SAIL/data/"

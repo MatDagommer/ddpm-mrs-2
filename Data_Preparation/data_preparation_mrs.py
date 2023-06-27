@@ -67,10 +67,6 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
 
     # real part if channel==1, else (real,imag)
 
-    # IMPLEMENT SECOND CHANNEL HERE
-    if cplx:
-        N_channels = 2
-
     if N_channels == 1:
         SpectraOFF = np.real(SpectraOFF)
         SpectraOFF_avg = np.real(SpectraOFF_avg)
