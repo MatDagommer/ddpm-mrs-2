@@ -98,7 +98,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     print("Starting validation dataset generation...")
     # OUTPUT [#samples x length x N_channels]
     clean_batch_val, noisy_batch_val = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, val_idx, acceleration_factor)
-    print("Starting validation dataset generation...")
+    print("Starting test dataset generation...")
     clean_batch_test, noisy_batch_test  = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, test_idx, acceleration_factor)
 
 
@@ -139,7 +139,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     test_set = TensorDataset(clean_batch_test, noisy_batch_test)
 
     print("Saving datasets...")
-    
+
     torch.save(train_set, os.path.join(data_path, "train_set.pt"))
     torch.save(val_set, os.path.join(data_path, "val_set.pt"))
     torch.save(test_set, os.path.join(data_path, "test_set.pt"))
