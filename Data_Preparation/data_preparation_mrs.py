@@ -44,6 +44,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     # Normalizing Spectra + FIDs
 
     print("Normalizing data...")
+
     if not fid:
         SpectraOFF_amp = np.abs(SpectraOFF)
         MAX_VAL = np.max(SpectraOFF_amp, axis=1)
@@ -66,6 +67,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
         SpectraOFF = np.expand_dims(np.divide(FidsOFF, repeat_), axis=-1)
 
     # real part if channel==1, else (real,imag)
+    print("Adjusting channels...")
 
     if N_channels == 1:
         SpectraOFF = np.real(SpectraOFF)
@@ -99,12 +101,8 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     print("Starting validation dataset generation...")
     clean_batch_test, noisy_batch_test  = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, test_idx, acceleration_factor)
 
-    print("clean_batch_val shape: ", clean_batch_val.shape)
 
     print("Converting data to tensors...")
-
-    print("noisy_batch_train dtype: ", noisy_batch_train.dtype)
-    print("noisy_batch_train dtype: ", noisy_batch_train.dtype)
 
     noisy_batch_train = torch.FloatTensor(noisy_batch_train)
     clean_batch_train = torch.FloatTensor(clean_batch_train)
@@ -114,6 +112,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     clean_batch_test = torch.FloatTensor(clean_batch_test)
     
     if cplx:
+        print("Setting data as complex...")
         noisy_batch_train = torch.view_as_complex(noisy_batch_train)
         noisy_batch_train = torch.unsqueeze(noisy_batch_train, dim=-1)
         clean_batch_train = torch.view_as_complex(clean_batch_train)
@@ -140,7 +139,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, waterRemoval=
     test_set = TensorDataset(clean_batch_test, noisy_batch_test)
 
     print("Saving datasets...")
-
+    
     torch.save(train_set, os.path.join(data_path, "train_set.pt"))
     torch.save(val_set, os.path.join(data_path, "val_set.pt"))
     torch.save(test_set, os.path.join(data_path, "test_set.pt"))

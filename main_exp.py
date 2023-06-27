@@ -81,7 +81,7 @@ if __name__ == "__main__":
     if args.model == "ddpm":
         if config['train']['epochs'] != args.epochs:
             config['train']['epochs'] = args.epochs 
-            print("Set the number of epochs to %d."%args.epochs)    
+            print("Number of epochs: %d."%args.epochs)    
         
     if args.fid == True: # when in=FID and out=Spectra ==> need both real/imag parts
         args.channels = 2
@@ -111,16 +111,16 @@ if __name__ == "__main__":
                     status = False
 
 
-    print('folder:', foldername)
+    print('Model saved in:', foldername)
     os.makedirs(foldername, exist_ok=True)
     data_path = args.datapath
 
-    print("BATCH SIZE: ", config['train']['batch_size'])
+    # print("batch size (training): ", config['train']['batch_size'])
     
     acceleration_factor = args.af
     train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor, \
                     N_channels=args.channels, fid=args.fid, waterRemoval=args.wr, cplx=cplx)
-    print("DATASET TYPE: ",type(train_set))
+    # print("DATASET TYPE: ",type(train_set))
     
     train_loader = DataLoader(train_set, batch_size=config['train']['batch_size'],
                               shuffle=True, drop_last=True, num_workers=0)
