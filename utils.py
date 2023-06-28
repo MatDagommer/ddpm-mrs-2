@@ -130,7 +130,7 @@ def lse_adjust(recon_batch, noisy_batch, amplitude=False):
             recon_batch_adjusted[i:i+1] = recon_batch[i:i+1] + beta
     return recon_batch_adjusted
 
-def evaluate(model, test_loader, shots, device, fid=False, cplx=False, lse=False, foldername="", filename=""):
+def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername="", filename=""):
 
     metric_names = ["psnr", "ssim", "pcc", "scc"]
     metric_names = metric_names + [m + "_model" for m in metric_names]
