@@ -120,6 +120,7 @@ if __name__ == "__main__":
     acceleration_factor = args.af
     train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor, \
                     N_channels=args.channels, fid=args.fid, waterRemoval=args.wr, cplx=cplx)
+    
     # print("DATASET TYPE: ",type(train_set))
     
     train_loader = DataLoader(train_set, batch_size=config['train']['batch_size'],

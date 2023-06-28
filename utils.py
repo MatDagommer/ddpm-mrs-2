@@ -166,9 +166,9 @@ def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername
                 out_numpy = lse_adjust(out_numpy, noisy_numpy)
             
             # keeping only the real part
-            clean_numpy_real = clean_numpy[...,0:1]
-            noisy_numpy_real = noisy_numpy[...,0:1]
-            out_numpy_real = out_numpy[...,0:1]
+            clean_numpy_real = np.real( clean_numpy[...,0:1] )
+            noisy_numpy_real = np.real( noisy_numpy[...,0:1] )
+            out_numpy_real = np.real( out_numpy[...,0:1] )
 
 
             out_noisy = compute_metrics(clean_numpy_real, noisy_numpy_real)
