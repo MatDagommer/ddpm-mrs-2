@@ -10,6 +10,7 @@ import skimage
 from dnresunet import DnResUNet
 from main_model import DDPM
 from aftnet1d import AFT_RACUNet
+from scipy.fft import fft, ifft, fftshift
 
 loss_fn = torch.nn.L1Loss()
 
@@ -129,7 +130,7 @@ def lse_adjust(recon_batch, noisy_batch, amplitude=False):
             recon_batch_adjusted[i:i+1] = recon_batch[i:i+1] + beta
     return recon_batch_adjusted
 
-def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername="", filename=""):
+def evaluate(model, test_loader, shots, device, fid=False, cplx=False, lse=False, foldername="", filename=""):
 
     metric_names = ["psnr", "ssim", "pcc", "scc"]
     metric_names = metric_names + [m + "_model" for m in metric_names]
@@ -164,13 +165,27 @@ def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername
             
             if lse:
                 out_numpy = lse_adjust(out_numpy, noisy_numpy)
-            
+
             # keeping only the real part
-            clean_numpy_real = np.real( clean_numpy[...,0:1] )
-            noisy_numpy_real = np.real( noisy_numpy[...,0:1] )
-            out_numpy_real = np.real( out_numpy[...,0:1] )
+            if fid:
+                if np.iscomplexobj(noisy_numpy): # complex dtype
+                    noisy_spectra = np.zeros_like(noisy_numpy)
+                    for i in range(noisy_numpy.shape[0]):
+                        noisy_spectra[i,:,0] = fftshift(fft(noisy_numpy[i,:,0]))
+                else:
+                    assert noisy_numpy.shape[-1] == 2, "The number of channels is not equal to 2." 
+                    noisy_fid = np.apply_along_axis(lambda args: [complex(*args)], 2, noisy_numpy)
+                    for i in range(noisy_numpy.shape[0]):
+                        noisy_spectra[i,:,0] = fftshift(fft(noisy_fid[i,:,0]))
 
-
+                clean_numpy_real = np.real( clean_numpy[...,0:1] )
+                noisy_numpy_real = np.real( noisy_spectra[...,0:1] )
+                out_numpy_real = np.real( out_numpy[...,0:1] )
+            else:
+                clean_numpy_real = np.real( clean_numpy[...,0:1] )
+                noisy_numpy_real = np.real( noisy_numpy[...,0:1] )
+                out_numpy_real = np.real( out_numpy[...,0:1] )
+                
             out_noisy = compute_metrics(clean_numpy_real, noisy_numpy_real)
             out_model = compute_metrics(clean_numpy_real, out_numpy_real)
             out = out_noisy + out_model
