@@ -59,12 +59,10 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
     repeat_ = np.repeat(np.expand_dims(repeat_, axis=-1), SpectraOFF.shape[1], axis=-1)
     repeat_ = np.transpose(repeat_, (1, 2, 0))
 
-    if not fid:
-        SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
-        SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF, axis=1), axis=-1) #[length x #subjects]
-    else:
-        SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
-        SpectraOFF_avg = np.expand_dims(np.mean(SpectraOFF, axis=1), axis=-1) #[length x #subjects]
+    SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
+    SpectraOFF_avg = np.mean(SpectraOFF, axis=1) #[length x #subjects]
+
+    if fid:
         SpectraOFF = np.expand_dims(np.divide(FidsOFF, repeat_), axis=-1)
 
 
