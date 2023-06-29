@@ -16,7 +16,7 @@ def evaluate_model(model_type, model_name, af=0, N_channels=2, fid=True, wr=True
         path = "config/base.yaml"
         with open(path, "r") as f:
             config = yaml.safe_load(f)
-        base_model = ConditionalModel(80, 1).to("cuda:0")
+        base_model = ConditionalModel(80, N_channels).to("cuda:0")
         model = DDPM(base_model, config, "cuda:0")
     elif model_type == "cnn":
         model = DnResUNet('dnresunet_model', 2, 2, "cuda:0", 1)
