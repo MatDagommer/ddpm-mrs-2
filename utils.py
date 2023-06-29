@@ -175,6 +175,7 @@ def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername
                 else:
                     assert noisy_numpy.shape[-1] == 2, "The number of channels is not equal to 2." 
                     noisy_fid = np.apply_along_axis(lambda args: [complex(*args)], 2, noisy_numpy)
+                    noisy_spectra = np.zeros_like(noisy_fid)
                     for i in range(noisy_numpy.shape[0]):
                         noisy_spectra[i,:,0] = fftshift(fft(noisy_fid[i,:,0]))
 
