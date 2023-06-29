@@ -8,6 +8,7 @@ from Data_Preparation.data_preparation_mrs import Data_Preparation
 from utils import evaluate, lse_adjust, compute_metrics
 from dnresunet import DnResUNet
 import yaml
+import torch
 
 def evaluate_model(model_type, model_name, af=0, N_channels=2, fid=True, wr=True, cplx=False):
 
@@ -29,3 +30,17 @@ def evaluate_model(model_type, model_name, af=0, N_channels=2, fid=True, wr=True
 
     test_loader = DataLoader(test_set, batch_size=10, num_workers=0)
     val_loader = DataLoader(val_set, batch_size=10, num_workers=0)
+
+    foldername = "check_points/" + model_name
+    output_path = foldername + "/model.pth"
+    model.load_state_dict(torch.load(output_path))
+
+    # evaluation at best epoch
+    # validation
+    print('evaluation of model at best epoch (validation set)')
+    evaluate(model, val_loader, 1, "cuda:0", foldername=foldername, fid=fid, filename="val_metrics")
+    
+    #test
+    print('evaluation of model at best epoch (test set)')
+    evaluate(model, test_loader, 1, "cuda:0", foldername=foldername, fid=fid, filename="test_metrics")
+    
