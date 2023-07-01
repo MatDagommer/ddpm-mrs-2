@@ -31,17 +31,6 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
             SpectraOFF[:, i, j] = fftshift(fft(FidsOFF[:, i, j]))
             SpectraON[:, i, j] = fftshift(fft(FidsON[:, i, j]))
 
-    # Water Peak Removal
-    
-    if waterRemoval:
-        print("Removing water peaks...")
-        SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
-
-        if fid: # Recompute FID without water peak
-            for i in range(SpectraOFF.shape[1]):
-                for j in range(SpectraOFF.shape[2]):
-                    FidsOFF[:, i, j] = ifft(fftshift(SpectraOFF[:, i, j]))
-
     # Normalizing Spectra + FIDs
 
     print("Normalizing data...")
@@ -60,11 +49,20 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
     repeat_ = np.transpose(repeat_, (1, 2, 0))
 
     SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
+
+    # Water Peak Removal
+    
+    if waterRemoval:
+        print("Removing water peaks...")
+        SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
+            
     SpectraOFF_avg = np.mean(SpectraOFF, axis=1) #[length x #subjects]
 
-    if fid:
-        SpectraOFF = np.expand_dims(np.divide(FidsOFF, repeat_), axis=-1)
-
+    if fid: # recomputing FID with normalized FFT (& optional Water Removal)
+        for i in range(SpectraOFF.shape[1]):
+                for j in range(SpectraOFF.shape[2]):
+                    FidsOFF[:, i, j] = ifft(fftshift(SpectraOFF[:, i, j]))
+        SpectraOFF = FidsOFF
 
     # real part if channel==1, else (real,imag)
     print("Adjusting channels...")
