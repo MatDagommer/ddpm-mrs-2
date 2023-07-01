@@ -48,7 +48,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
     repeat_ = np.repeat(np.expand_dims(repeat_, axis=-1), SpectraOFF.shape[1], axis=-1)
     repeat_ = np.transpose(repeat_, (1, 2, 0))
 
-    SpectraOFF = np.expand_dims(np.divide(SpectraOFF, repeat_), axis=-1)
+    SpectraOFF = np.divide(SpectraOFF, repeat_)
 
     # Water Peak Removal
     
@@ -56,6 +56,7 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
         print("Removing water peaks...")
         SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
             
+    SpectraOFF = np.expand_dims(SpectraOFF, axis=-1)
     SpectraOFF_avg = np.mean(SpectraOFF, axis=1) #[length x #subjects]
 
     if fid: # recomputing FID with normalized FFT (& optional Water Removal)
