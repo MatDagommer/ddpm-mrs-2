@@ -35,14 +35,15 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
 
     print("Normalizing data...")
 
-    if not fid:
-        SpectraOFF_amp = np.abs(SpectraOFF)
-        MAX_VAL = np.max(SpectraOFF_amp, axis=1)
-        MAX_VAL = np.max(MAX_VAL, axis=0)
-    else:
-        FidsOFF_amp = np.abs(FidsOFF)
-        MAX_VAL = np.max(FidsOFF_amp, axis=1)
-        MAX_VAL = np.max(MAX_VAL, axis=0)
+    # if not fid:
+    SpectraOFF_amp = np.abs(SpectraOFF)
+    MAX_VAL = np.max(SpectraOFF_amp, axis=1)
+    MAX_VAL = np.max(MAX_VAL, axis=0)
+
+    # else:
+    #     FidsOFF_amp = np.abs(FidsOFF)
+    #     MAX_VAL = np.max(FidsOFF_amp, axis=1)
+    #     MAX_VAL = np.max(MAX_VAL, axis=0)
 
     repeat_ = np.repeat(np.expand_dims(MAX_VAL, axis=-1), SpectraOFF.shape[0], axis=-1)
     repeat_ = np.repeat(np.expand_dims(repeat_, axis=-1), SpectraOFF.shape[1], axis=-1)
@@ -56,39 +57,43 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
         print("Removing water peaks...")
         SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
             
-    SpectraOFF = np.expand_dims(SpectraOFF, axis=-1)
     SpectraOFF_avg = np.mean(SpectraOFF, axis=1) #[length x #subjects]
 
     if fid: # recomputing FID with normalized FFT (& optional Water Removal)
         for i in range(SpectraOFF.shape[1]):
                 for j in range(SpectraOFF.shape[2]):
                     FidsOFF[:, i, j] = ifft(fftshift(SpectraOFF[:, i, j]))
-        SpectraOFF = FidsOFF
+        Input = FidsOFF
+    else:
+        Input = SpectraOFF
+
+    Input = np.expand_dims(Input, axis=-1)
+    SpectraOFF_avg = np.expand_dims(SpectraOFF_avg, axis=-1)
 
     # real part if channel==1, else (real,imag)
     print("Adjusting channels...")
 
     if N_channels == 1:
-        SpectraOFF = np.real(SpectraOFF)
+        Input = np.real(Input)
         SpectraOFF_avg = np.real(SpectraOFF_avg)
     elif N_channels == 2:  
-        SpectraOFF = np.concatenate((np.real(SpectraOFF), np.imag(SpectraOFF)), axis=-1)
+        Input = np.concatenate((np.real(Input), np.imag(Input)), axis=-1)
         SpectraOFF_avg = np.concatenate((np.real(SpectraOFF_avg), np.imag(SpectraOFF_avg)), axis=-1)
 
     # OUTPUT SHAPES:
-    # SpectraOFF: [length, N_acq, N_subj, N_channels]
+    # Input: [length, N_acq, N_subj, N_channels]
     # SpectraOFF_avg: [length, N_subj, N_channels]
 
-    # print("SpectraOFF shape: ", SpectraOFF.shape)
+    # print("Input shape: ", Input.shape)
     # print("SpectraOFF_avg shape: ", SpectraOFF_avg.shape)
 
-    _, _, N_subjects, _ = SpectraOFF.shape
+    _, _, N_subjects, _ = Input.shape
 
     print("Separating train / val / test sets...")
     train_idx, val_idx = train_test_split(range(N_subjects), test_size=0.2)
     val_idx, test_idx = train_test_split(val_idx, test_size=0.5)
 
-    noisy_batch_train = SpectraOFF[:, :, train_idx]
+    noisy_batch_train = Input[:, :, train_idx]
     clean_batch_train = SpectraOFF_avg[:, train_idx]
 
     # print("noisy_batch_train shape: ", noisy_batch_train.shape)
@@ -96,9 +101,9 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
 
     print("Starting validation dataset generation...")
     # OUTPUT [#samples x length x N_channels]
-    clean_batch_val, noisy_batch_val = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, val_idx, acceleration_factor)
+    clean_batch_val, noisy_batch_val = retrieve_val_test_set(Input, SpectraOFF_avg, val_idx, acceleration_factor)
     print("Starting test dataset generation...")
-    clean_batch_test, noisy_batch_test  = retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, test_idx, acceleration_factor)
+    clean_batch_test, noisy_batch_test  = retrieve_val_test_set(Input, SpectraOFF_avg, test_idx, acceleration_factor)
 
 
     print("Converting data to tensors...")
@@ -179,9 +184,9 @@ class DynamicDataset(Dataset):
         return clean_batch, noisy_batch
 
 
-def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, acceleration_factor, N_samples_per_subject=100):
+def retrieve_val_test_set(Input, SpectraOFF_avg, idx, acceleration_factor, N_samples_per_subject=100):
     
-    patch_size, N_acq, _, N_channels = SpectraOFF.shape
+    patch_size, N_acq, _, N_channels = Input.shape
     N_subjects = len(idx)
 
     clean_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
@@ -195,7 +200,7 @@ def retrieve_val_test_set(SpectraOFF, SpectraOFF_avg, idx, acceleration_factor, 
                 nb_samples = N_acq // acceleration_factor
             sample_idx = np.random.randint(0, N_acq, nb_samples)
             np.random.shuffle(sample_idx)
-            noisy_batch[i, j, :, :] = np.mean(SpectraOFF[:, sample_idx, i, :], axis=1)
+            noisy_batch[i, j, :, :] = np.mean(Input[:, sample_idx, i, :], axis=1)
             clean_batch[i, j, :, :] = SpectraOFF_avg[:, i, :]
 
     noisy_batch = noisy_batch.reshape(-1, patch_size, N_channels)
