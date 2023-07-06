@@ -10,6 +10,7 @@ import skimage
 from dnresunet import DnResUNet
 from main_model import DDPM
 from aftnet1d import AFT_RACUNet
+from wavegrad import WaveGrad
 from scipy.fft import fft, ifft, fftshift
 
 loss_fn = torch.nn.L1Loss()
@@ -43,7 +44,7 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 # print("noisy_batch shape:", noisy_batch.shape)
                 optimizer.zero_grad()
                 
-                if type(model) == DDPM:
+                if type(model) == DDPM or type(model) == WaveGrad:
                     loss = model(clean_batch, noisy_batch)
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.model.parameters(), 1.0)
@@ -77,7 +78,7 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 with tqdm(valid_loader) as it:
                     for batch_no, (clean_batch, noisy_batch) in enumerate(it, start=1):
                         clean_batch, noisy_batch = clean_batch.to(device), noisy_batch.to(device)
-                        if type(model) == DDPM:
+                        if type(model) == DDPM or type(model) == WaveGrad:
                             loss = model(clean_batch, noisy_batch)
                         elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                             recon_batch = model(noisy_batch)
@@ -145,14 +146,14 @@ def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername
             if shots > 1:
                 output = 0
                 for i in range(shots):
-                    if type(model) == DDPM:
+                    if type(model) == DDPM or type(model) == WaveGrad:
                         output+=model.denoising(noisy_batch)
                     elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                         model.eval()
                         output+=model(noisy_batch)
                 output /= shots
             else:
-                if type(model) == DDPM:
+                if type(model) == DDPM or type(model) == WaveGrad:
                     output = model.denoising(noisy_batch) #B,1,L
                 elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                     output = model(noisy_batch)

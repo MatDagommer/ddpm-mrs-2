@@ -50,12 +50,16 @@ class PositionalEncoding(nn.Module):
     """
     N = x.shape[0]
     T = x.shape[2]
-    return (x + self._build_encoding(noise_level)[:, :, None])
+    x2 = self._build_encoding(noise_level)[:, :, None]
+    print("NOISE LEVEL DIMENSION: ", noise_level.size())
+    print("X2 dimensions: ", x2.size())
+    return (x + x2)
 
   def _build_encoding(self, noise_level):
     count = self.dim // 2
     step = torch.arange(count, dtype=noise_level.dtype, device=noise_level.device) / count
-    encoding = noise_level.unsqueeze(1) * torch.exp(-ln(1e4) * step.unsqueeze(0))
+    # encoding = noise_level.unsqueeze(1) * torch.exp(-ln(1e4) * step.unsqueeze(0))
+    encoding = noise_level * torch.exp(-ln(1e4) * step.unsqueeze(0))
     encoding = torch.cat([torch.sin(encoding), torch.cos(encoding)], dim=-1)
     return encoding
 
@@ -152,7 +156,7 @@ class WaveGrad(nn.Module):
   # def __init__(self, params):
   def __init__(self):
     super().__init__()
-    self.params = params
+    # self.params = params
     self.downsample = nn.ModuleList([
         Conv1d(1, 32, 5, padding=2),
         DBlock(32, 128, 2),
@@ -174,14 +178,19 @@ class WaveGrad(nn.Module):
         UBlock(256, 128, 2, [1, 2, 4, 8]),
         UBlock(128, 128, 2, [1, 2, 4, 8]),
     ])
-    self.first_conv = Conv1d(128, 768, 3, padding=1)
+    # self.first_conv = Conv1d(128, 768, 3, padding=1)
+    # self.last_conv = Conv1d(128, 1, 3, padding=1
+
+    self.first_conv = Conv1d(1, 768, 3, padding=1)
     self.last_conv = Conv1d(128, 1, 3, padding=1)
 
   def forward(self, audio, spectrogram, noise_scale):
-    x = audio.unsqueeze(1)
+    # x = audio.unsqueeze(1)
+    x = audio
     downsampled = []
     for film, layer in zip(self.film, self.downsample):
       x = layer(x)
+      print("INPUT DIMENSIONS: ", x.size())
       downsampled.append(film(x, noise_scale))
 
     x = self.first_conv(spectrogram)

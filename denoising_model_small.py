@@ -31,6 +31,7 @@ class PositionalEncoding(nn.Module):
             1) * torch.exp(-ln(1e4) * step.unsqueeze(0))
         encoding = torch.cat(
             [torch.sin(encoding), torch.cos(encoding)], dim=-1)
+        print("ENCODING SHAPE: ", encoding.size())
         return encoding
   
 class FeatureWiseAffine(nn.Module):
@@ -43,6 +44,7 @@ class FeatureWiseAffine(nn.Module):
 
     def forward(self, x, noise_embed):
         batch = x.shape[0]
+        print("X SIZE: ", x.size())
         if self.use_affine_level:
             gamma, beta = self.noise_func(noise_embed).view(
                 batch, -1, 1).chunk(2, dim=1)

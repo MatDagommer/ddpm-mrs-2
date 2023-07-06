@@ -137,7 +137,8 @@ if __name__ == "__main__":
     elif args.model == "aftnet":
         model = AFT_RACUNet().to(args.device)
     elif args.model == "wavegrad":
-        model = WaveGrad().to(args.device)
+        base_model = WaveGrad().to(args.device)
+        model = DDPM(base_model, config, args.device)
     
     train(model, config['train'], train_loader, args.device, 
           valid_loader=val_loader, valid_epoch_interval=1, foldername=foldername)
