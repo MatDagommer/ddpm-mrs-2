@@ -31,6 +31,13 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
             SpectraOFF[:, i, j] = fftshift(fft(FidsOFF[:, i, j]))
             SpectraON[:, i, j] = fftshift(fft(FidsON[:, i, j]))
 
+
+    # Water Peak Removal
+    
+    if waterRemoval:
+        print("Removing water peaks...")
+        SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
+
     # Normalizing Spectra + FIDs
 
     print("Normalizing data...")
@@ -50,12 +57,6 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
     repeat_ = np.transpose(repeat_, (1, 2, 0))
 
     SpectraOFF = np.divide(SpectraOFF, repeat_)
-
-    # Water Peak Removal
-    
-    if waterRemoval:
-        print("Removing water peaks...")
-        SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
             
     SpectraOFF_avg = np.mean(SpectraOFF, axis=1) #[length x #subjects]
 

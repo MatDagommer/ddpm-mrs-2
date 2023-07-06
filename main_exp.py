@@ -40,7 +40,7 @@ def wait_for_input(timeout):
     else:
         # Timeout reached, no user input
         return "y"
-    
+
 
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser(description="DDPM for ECG")
