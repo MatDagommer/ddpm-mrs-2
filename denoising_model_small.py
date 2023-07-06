@@ -158,6 +158,3 @@ if __name__ == "__main__":
     #print(z.shape)
     
     summary(net)
-    
-    
-    

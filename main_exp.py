@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset
 from sklearn.model_selection import train_test_split
 from dnresunet import DnResUNet
 from aftnet1d import AFT_RACUNet
+from wavegrad import WaveGrad
 from sys import platform
 
 
@@ -56,7 +57,7 @@ if __name__ == "__main__":
                         help="data path.")
     parser.add_argument('--epochs', type=int, default=400, help="number of epochs.")
     parser.add_argument('--model', type=str, default="ddpm", help="Model to be used for training. \
-                        Default: ddpm. Other options: cnn, aftnet")
+                        Default: ddpm. Other options: cnn, aftnet, wavegrad")
     parser.add_argument('--fid', action='store_true', default=False, help='Use FID as an input.')
     parser.add_argument('--dilation', type=int, default=1, help="dilation to use for convolutions \
                         (CNN).")
@@ -135,6 +136,8 @@ if __name__ == "__main__":
         model = DnResUNet('dnresunet_model', 2, 2, args.device, args.dilation)
     elif args.model == "aftnet":
         model = AFT_RACUNet().to(args.device)
+    elif args.model == "wavegrad":
+        model = WaveGrad().to(args.device)
     
     train(model, config['train'], train_loader, args.device, 
           valid_loader=val_loader, valid_epoch_interval=1, foldername=foldername)
