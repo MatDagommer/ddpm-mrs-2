@@ -104,11 +104,15 @@ class UBlock(nn.Module):
     ])
 
   def forward(self, x, film_shift, film_scale):
-    block1 = F.interpolate(x, size=x.shape[-1] * self.factor)
+    if self.factor == 3:
+      size = x.shape[-1] * self.factor + 2
+    else:
+      size = x.shape[-1] * self.factor
+    block1 = F.interpolate(x, size=size)
     block1 = self.block1(block1)
 
     block2 = F.leaky_relu(x, 0.2)
-    block2 = F.interpolate(block2, size=x.shape[-1] * self.factor)
+    block2 = F.interpolate(block2, size=size)
     block2 = self.block2[0](block2)
 
     print('X shape: ', x.size())
@@ -207,7 +211,7 @@ class WaveGrad(nn.Module):
     for layer, (film_shift, film_scale) in zip(self.upsample, reversed(downsampled)):
       print("IT: ", it)
       if it == 0:
-        x = torch.ones(96, 512, 35).cuda()
+        x = torch.ones(96, 512, 34).cuda()
         it += 1
       else:
         x = layer(x, film_shift, film_scale)
