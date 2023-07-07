@@ -201,6 +201,9 @@ class DDPM(nn.Module):
     def p_losses(self, x_in, y_in, noise=None):
         #x_in: clean signal
         #y_in: noisy signal as condition
+        print("X_IN SHAPE: ", x_in.size())
+        print("Y_IN SHAPE: ", y_in.size())
+
         x_start = x_in
         B,C,L = x_start.shape
         t = np.random.randint(1, self.num_steps + 1)
