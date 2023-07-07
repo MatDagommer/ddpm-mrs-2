@@ -151,7 +151,6 @@ class DBlock(nn.Module):
 
   def forward(self, x):
     size = x.shape[-1] // self.factor
-
     residual = self.residual_dense(x)
     residual = F.interpolate(residual, size=size)
 
@@ -165,11 +164,11 @@ class DBlock(nn.Module):
 
 class WaveGrad(nn.Module):
   # def __init__(self, params):
-  def __init__(self):
+  def __init__(self, N_channels):
     super().__init__()
     # self.params = params
     self.downsample = nn.ModuleList([
-        Conv1d(1, 32, 5, padding=2),
+        Conv1d(N_channels, 32, 5, padding=2),
         DBlock(32, 128, 2),
         DBlock(128, 128, 2),
         DBlock(128, 256, 3),
@@ -193,8 +192,8 @@ class WaveGrad(nn.Module):
     # self.first_conv = Conv1d(128, 768, 3, padding=1)
     # self.last_conv = Conv1d(128, 1, 3, padding=1
 
-    self.first_conv = Conv1d(1, 768, 3, padding=1)
-    self.last_conv = Conv1d(128, 1, 3, padding=1)
+    self.first_conv = Conv1d(N_channels, 768, 3, padding=1)
+    self.last_conv = Conv1d(128, N_channels, 3, padding=1)
 
   def forward(self, audio, spectrogram, noise_scale):
     # x = audio.unsqueeze(1)
