@@ -4,7 +4,7 @@ train:
   # feats: 80
   epochs: 400
   batch_size: 32
-  lr: 2.0e-4
+  lr: 1.0e-4
 
 diffusion:
   beta_start: 0.0001
