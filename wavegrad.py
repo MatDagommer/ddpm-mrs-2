@@ -170,7 +170,7 @@ class WaveGrad(nn.Module):
         DBlock(128, 128, 2),
         DBlock(128, 256, 3),
         DBlock(256, 512, 5),
-    ])
+    ])  
     self.film = nn.ModuleList([
         FiLM(32, 128),
         FiLM(128, 128),
@@ -201,7 +201,8 @@ class WaveGrad(nn.Module):
       print("INPUT DIMENSIONS: ", x.size())
       downsampled.append(film(x, noise_scale))
 
-    x = self.first_conv(spectrogram)
+    # x = self.first_conv(spectrogram)
+    x = torch.ones(96, 1, 7)
     for layer, (film_shift, film_scale) in zip(self.upsample, reversed(downsampled)):
       x = layer(x, film_shift, film_scale)
     x = self.last_conv(x)
