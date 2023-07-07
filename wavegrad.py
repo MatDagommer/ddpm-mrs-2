@@ -114,6 +114,8 @@ class UBlock(nn.Module):
     print('X shape: ', x.size())
     print('BLOCK 1 shape: ', block1.size())
     print('BLOCK 2 shape: ', block2.size())
+    print('FILM_SHIFT SHAPE: ', film_shift.size())
+    print("FILM SCALE: ", film_scale.size())
 
     block2 = film_shift + film_scale * block2
     block2 = F.leaky_relu(block2, 0.2)
@@ -183,6 +185,7 @@ class WaveGrad(nn.Module):
         UBlock(256, 128, 2, [1, 2, 4, 8]),
         UBlock(128, 128, 2, [1, 2, 4, 8]),
     ])
+    
     # self.first_conv = Conv1d(128, 768, 3, padding=1)
     # self.last_conv = Conv1d(128, 1, 3, padding=1
 
