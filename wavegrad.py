@@ -110,6 +110,11 @@ class UBlock(nn.Module):
     block2 = F.leaky_relu(x, 0.2)
     block2 = F.interpolate(block2, size=x.shape[-1] * self.factor)
     block2 = self.block2[0](block2)
+
+    print('X shape: ', x.size())
+    print('BLOCK 1 shape: ', block1.size())
+    print('BLOCK 2 shape: ', block2.size())
+
     block2 = film_shift + film_scale * block2
     block2 = F.leaky_relu(block2, 0.2)
     block2 = self.block2[1](block2)
