@@ -206,7 +206,7 @@ class WaveGrad(nn.Module):
     it = 0
     for layer, (film_shift, film_scale) in zip(self.upsample, reversed(downsampled)):
       if it == 0:
-        x = torch.ones(96, 768, 34).cuda()
+        x = torch.ones(96, 128, 34).cuda()
       else:
         x = layer(x, film_shift, film_scale)
         it += 1
