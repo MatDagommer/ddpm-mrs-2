@@ -140,7 +140,7 @@ if __name__ == "__main__":
     elif args.model == "aftnet":
         model = AFT_RACUNet().to(args.device)
     elif args.model == "wavegrad":
-        base_model = WaveGrad().to(args.device)
+        base_model = WaveGrad(args.channels).to(args.device)
         model = DDPM(base_model, config, args.device)
     
     train(model, config['train'], train_loader, args.device, 
