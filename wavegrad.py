@@ -202,7 +202,7 @@ class WaveGrad(nn.Module):
       downsampled.append(film(x, noise_scale))
 
     # x = self.first_conv(spectrogram)
-    x = torch.ones(96, 1, 7)
+    x = torch.ones(96, 768, 7)
     for layer, (film_shift, film_scale) in zip(self.upsample, reversed(downsampled)):
       x = layer(x, film_shift, film_scale)
     x = self.last_conv(x)
