@@ -69,6 +69,9 @@ if __name__ == "__main__":
         args.config = "dnresunet.yaml"
         args.channels = 2
 
+    if args.model == "wavegrad":
+        args.config = "wavegrad.yaml"
+
     cplx = False
     if args.model == "aftnet":
         args.config = "aftnet.yaml"
