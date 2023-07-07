@@ -211,7 +211,7 @@ class WaveGrad(nn.Module):
     for layer, (film_shift, film_scale) in zip(self.upsample, reversed(downsampled)):
       print("IT: ", it)
       if it == 0:
-        x = torch.ones(96, 512, 34).cuda()
+        x = torch.ones(audio.size()[0], 512, 34).cuda()
         it += 1
       else:
         x = layer(x, film_shift, film_scale)
