@@ -51,8 +51,8 @@ class PositionalEncoding(nn.Module):
     N = x.shape[0]
     T = x.shape[2]
     x2 = self._build_encoding(noise_level)[:, :, None]
-    print("NOISE LEVEL DIMENSION: ", noise_level.size())
-    print("X2 dimensions: ", x2.size())
+    # print("NOISE LEVEL DIMENSION: ", noise_level.size())
+    # print("X2 dimensions: ", x2.size())
     return (x + x2)
 
   def _build_encoding(self, noise_level):
@@ -115,11 +115,11 @@ class UBlock(nn.Module):
     block2 = F.interpolate(block2, size=size)
     block2 = self.block2[0](block2)
 
-    print('X shape: ', x.size())
-    print('BLOCK 1 shape: ', block1.size())
-    print('BLOCK 2 shape: ', block2.size())
-    print('FILM_SHIFT SHAPE: ', film_shift.size())
-    print("FILM SCALE: ", film_scale.size())
+    # print('X shape: ', x.size())
+    # print('BLOCK 1 shape: ', block1.size())
+    # print('BLOCK 2 shape: ', block2.size())
+    # print('FILM_SHIFT SHAPE: ', film_shift.size())
+    # print("FILM SCALE: ", film_scale.size())
 
     block2 = film_shift + film_scale * block2
     block2 = F.leaky_relu(block2, 0.2)
@@ -202,14 +202,14 @@ class WaveGrad(nn.Module):
     downsampled = []
     for film, layer in zip(self.film, self.downsample):
       x = layer(x)
-      print("INPUT DIMENSIONS: ", x.size())
+      # print("INPUT DIMENSIONS: ", x.size())
       downsampled.append(film(x, noise_scale))
 
     # x = self.first_conv(spectrogram)
     # x = torch.ones(96, 768, 7).cuda()
     it = 0
     for layer, (film_shift, film_scale) in zip(self.upsample, reversed(downsampled)):
-      print("IT: ", it)
+      # print("IT: ", it)
       if it == 0:
         x = torch.ones(audio.size()[0], 512, 34).cuda()
         it += 1
