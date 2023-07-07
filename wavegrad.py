@@ -179,7 +179,7 @@ class WaveGrad(nn.Module):
         FiLM(512, 512),
     ])
     self.upsample = nn.ModuleList([
-        UBlock(768, 512, 5, [1, 3, 1, 3]),
+        UBlock(768, 512, 5, [1, 5, 1, 5]),
         UBlock(512, 512, 5, [1, 2, 1, 2]),
         UBlock(512, 256, 3, [1, 2, 4, 8]),
         UBlock(256, 128, 2, [1, 2, 4, 8]),
