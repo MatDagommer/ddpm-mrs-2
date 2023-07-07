@@ -179,7 +179,7 @@ class WaveGrad(nn.Module):
         FiLM(512, 512),
     ])
     self.upsample = nn.ModuleList([
-        UBlock(768, 512, 5, [1, 10, 1, 10]),
+        UBlock(768, 512, 5, [1, 2, 1, 2]),
         UBlock(512, 512, 5, [1, 2, 1, 2]),
         UBlock(512, 256, 3, [1, 2, 4, 8]),
         UBlock(256, 128, 2, [1, 2, 4, 8]),
@@ -207,7 +207,7 @@ class WaveGrad(nn.Module):
     for layer, (film_shift, film_scale) in zip(self.upsample, reversed(downsampled)):
       print("IT: ", it)
       if it == 0:
-        x = torch.ones(96, 512, 34).cuda()
+        x = torch.ones(96, 512, 35).cuda()
         it += 1
       else:
         x = layer(x, film_shift, film_scale)
