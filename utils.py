@@ -24,6 +24,7 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
     
     # Water Peak Removal:
     # Computing Loss on Cropped Interval
+
     crop_start = 1075
     crop_stop = 2048
 
@@ -209,10 +210,10 @@ def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername
                 noisy_numpy_real = np.real( noisy_numpy[...,0:1] )
                 out_numpy_real = np.real( out_numpy[...,0:1] )
                 
-            out_noisy = compute_metrics(clean_numpy_real[crop_start:crop_stop], \
-                                        noisy_numpy_real[crop_start:crop_stop])
-            out_model = compute_metrics(clean_numpy_real[crop_start:crop_stop], \
-                                        out_numpy_real[crop_start:crop_stop])
+            out_noisy = compute_metrics(clean_numpy_real[:,crop_start:crop_stop], \
+                                        noisy_numpy_real[:,crop_start:crop_stop])
+            out_model = compute_metrics(clean_numpy_real[:,crop_start:crop_stop], \
+                                        out_numpy_real[:,crop_start:crop_stop])
             out = out_noisy + out_model
             
             for i in range(len(metrics)):
