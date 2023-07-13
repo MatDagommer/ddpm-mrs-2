@@ -7,6 +7,7 @@ import metrics
 from main_model import EMA
 import scipy
 import skimage
+import sklearn
 from dnresunet import DnResUNet
 from main_model import DDPM
 from aftnet1d import AFT_RACUNet
@@ -108,7 +109,7 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
    
 
 def compute_metrics(clean, noisy):
-    psnr, ssim, pcc, scc = [], [], [], []
+    psnr, rmse, pcc, scc = [], [], [], []
     for i in range(clean.shape[0]):
         data_range = np.max(np.concatenate((clean[i].flatten(), noisy[i].flatten())))
         pcc_ = scipy.stats.pearsonr(clean[i].flatten(), noisy[i].flatten())
@@ -116,8 +117,9 @@ def compute_metrics(clean, noisy):
         scc_ = scipy.stats.spearmanr(clean[i].flatten(), noisy[i].flatten())
         scc.append(scc_.statistic)
         psnr.append(skimage.metrics.peak_signal_noise_ratio(clean[i].flatten(), noisy[i].flatten(), data_range=data_range))
-        ssim.append(skimage.metrics.structural_similarity(clean[i].flatten(), noisy[i].flatten(), data_range=data_range))
-    return psnr, ssim, pcc, scc
+        # ssim.append(skimage.metrics.structural_similarity(clean[i].flatten(), noisy[i].flatten(), data_range=data_range))
+        rmse.append(sklearn.metrics.mean_squared_error(clean[i].flatten(), noisy[i].flatten()))
+    return psnr, rmse, pcc, scc
 
 def lse_adjust(recon_batch, noisy_batch, amplitude=False):
     recon_batch_adjusted = np.zeros_like(recon_batch)
@@ -133,7 +135,10 @@ def lse_adjust(recon_batch, noisy_batch, amplitude=False):
 
 def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername="", filename=""):
 
-    metric_names = ["psnr", "ssim", "pcc", "scc"]
+    if (model is None):
+        print("CHECK")
+
+    metric_names = ["psnr", "rmse", "pcc", "scc"]
     metric_names = metric_names + [m + "_model" for m in metric_names]
     values = [[] for i in range(len(metric_names))]
     metrics = dict(zip(metric_names, values))
@@ -146,17 +151,24 @@ def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername
             if shots > 1:
                 output = 0
                 for i in range(shots):
-                    if type(model) == DDPM or type(model) == WaveGrad:
-                        output+=model.denoising(noisy_batch)
-                    elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
-                        model.eval()
-                        output+=model(noisy_batch)
+                    if model is not None:
+                        if type(model) == DDPM or type(model) == WaveGrad:
+                            output+=model.denoising(noisy_batch)
+                        elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
+                            model.eval()
+                            output+=model(noisy_batch)
+                    else:
+                        output = noisy_batch
                 output /= shots
             else:
-                if type(model) == DDPM or type(model) == WaveGrad:
-                    output = model.denoising(noisy_batch) #B,1,L
-                elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
-                    output = model(noisy_batch)
+                if model is not None:
+                    if type(model) == DDPM or type(model) == WaveGrad:
+                        output = model.denoising(noisy_batch) #B,1,L
+                    elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
+                        output = model(noisy_batch)
+                else:
+                    output = noisy_batch
+
             clean_batch = clean_batch.permute(0, 2, 1)
             noisy_batch = noisy_batch.permute(0, 2, 1)
             output = output.permute(0, 2, 1) #B,L,1

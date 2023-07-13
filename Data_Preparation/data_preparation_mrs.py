@@ -102,10 +102,19 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
 
     print("Starting validation dataset generation...")
     # OUTPUT [#samples x length x N_channels]
-    clean_batch_val, noisy_batch_val = retrieve_val_test_set(Input, SpectraOFF_avg, val_idx, acceleration_factor)
+    clean_batch_val, noisy_batch_val, _, _ = retrieve_val_test_set(Input, SpectraOFF_avg, val_idx, acceleration_factor)
     print("Starting test dataset generation...")
-    clean_batch_test, noisy_batch_test  = retrieve_val_test_set(Input, SpectraOFF_avg, test_idx, acceleration_factor)
+    clean_batch_test, noisy_batch_test, nb_samples_test, samples_ids_test  = retrieve_val_test_set(Input, SpectraOFF_avg, test_idx, acceleration_factor)
 
+
+    with open(os.path.join(data_path, "test_ids"), "wb") as file:
+        pickle.dump(test_idx, file)
+
+    with open(os.path.join(data_path, "nb_samples_test"), "wb") as file:
+        pickle.dump(nb_samples_test, file)
+
+    with open(os.path.join(data_path, "samples_ids_test"), "wb") as file:
+        pickle.dump(samples_ids_test, file)
 
     print("Converting data to tensors...")
 
@@ -189,6 +198,8 @@ def retrieve_val_test_set(Input, SpectraOFF_avg, idx, acceleration_factor, N_sam
     
     patch_size, N_acq, _, N_channels = Input.shape
     N_subjects = len(idx)
+    nb_samples_list = []
+    samples_ids_list = []
 
     clean_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
     noisy_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
@@ -199,12 +210,14 @@ def retrieve_val_test_set(Input, SpectraOFF_avg, idx, acceleration_factor, N_sam
                 nb_samples = int(N_acq / np.random.uniform(5, 33))
             else:
                 nb_samples = N_acq // acceleration_factor
+            nb_samples_list.append(nb_samples)
             sample_idx = np.random.randint(0, N_acq, nb_samples)
             np.random.shuffle(sample_idx)
+            samples_ids_list.append(sample_idx)
             noisy_batch[i, j, :, :] = np.mean(Input[:, sample_idx, i, :], axis=1)
             clean_batch[i, j, :, :] = SpectraOFF_avg[:, i, :]
 
     noisy_batch = noisy_batch.reshape(-1, patch_size, N_channels)
     clean_batch = clean_batch.reshape(-1, patch_size, N_channels)
 
-    return clean_batch, noisy_batch
+    return clean_batch, noisy_batch, nb_samples_list, samples_ids_list

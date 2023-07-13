@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import mean_squared_error
 import scipy
 import skimage
 
@@ -56,6 +57,7 @@ def PSNR(x, y):
     psnr = skimage.metrics.peak_signal_noise_ratio(x, y, data_range=np.max(np.concatenate((x, y))))
     return psnr
 
-def SSIM(x, y):
-    ssim = skimage.metrics.structural_similarity(x, y, data_range=np.max(np.concatenate((x, y))))
-    return ssim
+def RMSE(x, y):
+    # ssim = skimage.metrics.structural_similarity(x, y, data_range=np.max(np.concatenate((x, y))))
+    rmse = mean_squared_error(x,y)
+    return rmse
