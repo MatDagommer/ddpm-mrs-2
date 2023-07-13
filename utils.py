@@ -54,12 +54,10 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                     loss = model(clean_batch, noisy_batch)
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.model.parameters(), 1.0)
-                elif type(model) == WaveGrad:
-                    recon_batch = model(noisy_batch)
-                    
                 elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                     recon_batch = model(noisy_batch)
-                    loss = loss_fn(recon_batch, clean_batch)
+                    loss = loss_fn(recon_batch[:,:,crop_start:crop_stop], \
+                                   clean_batch[:,:,crop_start:crop_stop])
                     loss.backward()
                     # torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 
@@ -90,8 +88,8 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                             loss = model(clean_batch, noisy_batch)
                         elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                             recon_batch = model(noisy_batch)
-                            loss = loss_fn(recon_batch[crop_start:crop_stop], \
-                                           clean_batch[crop_start:crop_stop])
+                            loss = loss_fn(recon_batch[:,:,crop_start:crop_stop], \
+                                           clean_batch[:,:,crop_start:crop_stop])
                         avg_loss_valid += loss.item()
                         it.set_postfix(
                             ordered_dict={
@@ -150,6 +148,9 @@ def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername
     metric_names = metric_names + [m + "_model" for m in metric_names]
     values = [[] for i in range(len(metric_names))]
     metrics = dict(zip(metric_names, values))
+
+    crop_start = 1075
+    crop_stop = 2048
     
     restored_sig = []
     with tqdm(test_loader) as it:
@@ -208,8 +209,10 @@ def evaluate(model, test_loader, shots, device, fid=False, lse=False, foldername
                 noisy_numpy_real = np.real( noisy_numpy[...,0:1] )
                 out_numpy_real = np.real( out_numpy[...,0:1] )
                 
-            out_noisy = compute_metrics(clean_numpy_real, noisy_numpy_real)
-            out_model = compute_metrics(clean_numpy_real, out_numpy_real)
+            out_noisy = compute_metrics(clean_numpy_real[crop_start:crop_stop], \
+                                        noisy_numpy_real[crop_start:crop_stop])
+            out_model = compute_metrics(clean_numpy_real[crop_start:crop_stop], \
+                                        out_numpy_real[crop_start:crop_stop])
             out = out_noisy + out_model
             
             for i in range(len(metrics)):
