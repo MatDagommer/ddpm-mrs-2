@@ -173,6 +173,12 @@ class DynamicDataset(Dataset):
         self.patch_size, self.N_acq, self.N_subjects, self.N_channels = self.noisy_batch_train.shape
         self.acceleration_factor = acceleration_factor
         self.N_samples_per_subject = N_samples_per_subject
+
+        # AF = 0 ONLY
+        self.lb_R = 8 # lower bound R
+        self.ub_R = 80 # upper bound R
+        self.lb_nb_samples = self.N_acq // self.ub_R # lower bound number of samples
+        self.ub_nb_samples = self.N_acq // self.lb_R # upper bound number of samples
         
     def __len__(self):
 
@@ -182,7 +188,9 @@ class DynamicDataset(Dataset):
 
         subject_idx = np.random.randint(0, self.N_subjects)
         if self.acceleration_factor == 0:
-            sample_ids = np.random.randint(0, self.N_acq, int(self.N_acq // np.random.uniform(5, 33)))
+            sample_ids = np.random.randint(0, self.N_acq, \
+                                           np.random.random_integers(self.lb_nb_samples, \
+                                                                     self.ub_nb_samples))
         else:
             sample_ids = np.random.randint(0, self.N_acq, self.N_acq // self.acceleration_factor)
         np.random.shuffle(sample_ids)
@@ -204,10 +212,16 @@ def retrieve_val_test_set(Input, SpectraOFF_avg, idx, acceleration_factor, N_sam
     clean_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
     noisy_batch = np.zeros((N_subjects, N_samples_per_subject, patch_size, N_channels))
 
+    # AF = 0 ONLY
+    lb_R = 8 # lower bound R
+    ub_R = 80 # upper bound R
+    lb_nb_samples = N_acq // ub_R # lower bound number of samples
+    ub_nb_samples = N_acq // lb_R # upper bound number of samples
+
     for i in tqdm(range(N_subjects), leave=False):
         for j in range(N_samples_per_subject):
             if acceleration_factor == 0:
-                nb_samples = int(N_acq / np.random.uniform(5, 33))
+                nb_samples = np.random.random_integers(lb_nb_samples, ub_nb_samples)
             else:
                 nb_samples = N_acq // acceleration_factor
             nb_samples_list.append(nb_samples)
