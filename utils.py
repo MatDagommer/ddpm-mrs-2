@@ -45,11 +45,13 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 # print("noisy_batch shape:", noisy_batch.shape)
                 optimizer.zero_grad()
                 
-                if type(model) == DDPM or type(model) == WaveGrad:
+                if type(model) == DDPM:
                     loss = model(clean_batch, noisy_batch)
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.model.parameters(), 1.0)
-
+                elif type(model) == WaveGrad:
+                    recon_batch = model(noisy_batch)
+                    
                 elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                     recon_batch = model(noisy_batch)
                     loss = loss_fn(recon_batch, clean_batch)
