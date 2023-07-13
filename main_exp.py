@@ -61,7 +61,7 @@ if __name__ == "__main__":
     parser.add_argument('--fid', action='store_true', default=False, help='Use FID as an input.')
     parser.add_argument('--dilation', type=int, default=1, help="dilation to use for convolutions \
                         (CNN).")
-    parser.add_argument('--wr', action='store_true', default=False, help="water peak removal.")
+    # parser.add_argument('--wr', action='store_true', default=False, help="water peak removal.")
     args = parser.parse_args()
     print(args)
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     
     acceleration_factor = args.af
     train_set, val_set, test_set = Data_Preparation(data_path, acceleration_factor, \
-                    N_channels=args.channels, fid=args.fid, waterRemoval=args.wr, cplx=cplx)
+                    N_channels=args.channels, fid=args.fid, cplx=cplx)
     
     # print("DATASET TYPE: ",type(train_set))
     

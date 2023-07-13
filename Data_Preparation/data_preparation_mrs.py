@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, Subset, ConcatDataset, TensorDataset, D
 # Prepare train / val / test sets (subject separation)
 
 def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
-                     waterRemoval=False, fid=False, cplx=False):
+                     fid=False, cplx=False):
 
     np.random.seed(1234)
 
@@ -34,9 +34,9 @@ def Data_Preparation(data_path, acceleration_factor, N_channels=1, \
 
     # Water Peak Removal
     
-    if waterRemoval:
-        print("Removing water peaks...")
-        SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
+    # if waterRemoval:
+    #     print("Removing water peaks...")
+    #     SpectraOFF[975:1075] = SpectraOFF[975:1075] - SpectraON[975:1075]
 
     # Normalizing Spectra + FIDs
 

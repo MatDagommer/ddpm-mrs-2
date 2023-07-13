@@ -36,6 +36,9 @@ class DDPM(nn.Module):
         
         self.set_new_noise_schedule(config_diff, device)
         
+        self.crop_start = 1075
+        self.crop_stop = 2048
+        
     def make_beta_schedule(self, schedule='linear', n_timesteps=1000, start=1e-5, end=1e-2):
         if schedule == 'linear':
             betas = torch.linspace(start, end, n_timesteps)
@@ -226,7 +229,8 @@ class DDPM(nn.Module):
         else:
             x_recon = self.model(x_noisy, y_in, continuous_sqrt_alpha_cumprod)
 
-        loss = self.loss_func(noise, x_recon)
+        loss = self.loss_func(noise[self.crop_start:self.crop_stop], \
+                              x_recon[self.crop_start:self.crop_stop])
         return loss
     
     def forward(self, x, y, *args, **kwargs):

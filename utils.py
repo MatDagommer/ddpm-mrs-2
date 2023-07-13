@@ -19,9 +19,14 @@ loss_fn = torch.nn.L1Loss()
 def train(model, config, train_loader, device, valid_loader=None, valid_epoch_interval=1, foldername=""):
     optimizer = Adam(model.parameters(), lr=config["lr"])
     
-    #ema = EMA(0.9)
-    #ema.register(model)
+    # ema = EMA(0.9)
+    # ema.register(model)
     
+    # Water Peak Removal:
+    # Computing Loss on Cropped Interval
+    crop_start = 1075
+    crop_stop = 2048
+
     if foldername != "":
         output_path = foldername + "/model.pth"
         final_path = foldername + "/final.pth"
@@ -81,11 +86,12 @@ def train(model, config, train_loader, device, valid_loader=None, valid_epoch_in
                 with tqdm(valid_loader) as it:
                     for batch_no, (clean_batch, noisy_batch) in enumerate(it, start=1):
                         clean_batch, noisy_batch = clean_batch.to(device), noisy_batch.to(device)
-                        if type(model) == DDPM or type(model) == WaveGrad:
+                        if type(model) == DDPM:
                             loss = model(clean_batch, noisy_batch)
                         elif type(model) == DnResUNet or type(model) == AFT_RACUNet:
                             recon_batch = model(noisy_batch)
-                            loss = loss_fn(recon_batch, clean_batch)
+                            loss = loss_fn(recon_batch[crop_start:crop_stop], \
+                                           clean_batch[crop_start:crop_stop])
                         avg_loss_valid += loss.item()
                         it.set_postfix(
                             ordered_dict={
